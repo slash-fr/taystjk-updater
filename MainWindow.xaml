@@ -1,0 +1,50 @@
+﻿<Window x:Class="Updater.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Updater"
+        mc:Ignorable="d"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="CanMinimize"
+        Title="Launch TaystJK" Height="450" Width="640">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32" ResizeBorderThickness="0"/>
+    </WindowChrome.WindowChrome>
+    <Border CornerRadius="8" BorderBrush="#404040" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="32"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="46"/>
+                    <ColumnDefinition Width="46"/>
+                    <ColumnDefinition Width="46"/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" CornerRadius="8 0 0 0" Background="#040430"></Border>
+                <Button Grid.Column="1" Style="{StaticResource TitleBarButtonStyle}" RenderOptions.EdgeMode="Aliased" Click="MinimizeButton_Click">
+                    <Path Data="M 16,15.5 H 28" Style="{StaticResource TitleBarButtonPathStyle}"/>
+                </Button>
+                <Button Grid.Column="2" Style="{StaticResource TitleBarButtonStyle}" IsEnabled="False">
+                    <Path Width="46" Height="32" Data="M 18.5,10.5 H 27.5 V 19.5 H 18.5 Z" Stroke="#414164" Style="{StaticResource TitleBarButtonPathStyle}"/>
+                </Button>
+                <Button Grid.Column="3" Style="{StaticResource TitleBarButtonStyle}" Click="CloseButton_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="0 8 0 0"/>
+                        </Style>
+                    </Button.Resources>
+                    <Path Width="46" Height="32" Data="M 18,11 27,20 M 18,20 27,11" Style="{StaticResource TitleBarButtonPathStyle}"/>
+                </Button>
+            </Grid>
+            <Border Grid.Row="1" CornerRadius="0 0 8 8" Background="#040430">
+                <Label Content="Checking for updates…" HorizontalAlignment="Center" VerticalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="20" Foreground="White"/>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
