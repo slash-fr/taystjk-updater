@@ -151,23 +151,12 @@
                FontSize="20"
                Foreground="White">
         </Label>
-        
+
         <Button Content="Skip"
                 Grid.Row="2"
                 Width="60"
                 Height="30"
-                Background="LightBlue"
-                Foreground="Black"
-                BorderThickness="0"
-                FontSize="14"
-                FontWeight="SemiBold"
-                Cursor="Hand"
-                Opacity="0.5">
-            <Button.Resources>
-                <Style TargetType="Border">
-                    <Setter Property="CornerRadius" Value="8"/>
-                </Style>
-            </Button.Resources>
+                Style="{StaticResource DefaultButtonStyle}">
         </Button>
     </Grid>
 </Window>
