@@ -29,7 +29,7 @@
               Width="256"
               Height="256"
               VerticalAlignment="Bottom"
-              Fill="White"
+              Fill="{StaticResource PathFillColor}"
               Data="m 120,33 -8,1 v 14 h -8 v 80 l -36,36 v 24 l 52,-52 z">
             <Path.LayoutTransform>
                 <ScaleTransform ScaleX="0.5" ScaleY="0.5"/>
@@ -40,7 +40,7 @@
               Width="256"
               Height="256"
               VerticalAlignment="Bottom"
-              Fill="White"
+              Fill="{StaticResource PathFillColor}"
               Data="m 120,154 -16,16 v 51 l 16,2">
             <Path.LayoutTransform>
                 <ScaleTransform ScaleX="0.5" ScaleY="0.5"/>
@@ -51,7 +51,7 @@
               Width="256"
               Height="256"
               VerticalAlignment="Bottom"
-              Fill="White"
+              Fill="{StaticResource PathFillColor}"
               Data="m 136,33 0,190 16,-2 0,-79 40,40 v -24 l -40,-40 24,-24 V 72 L 152,96 V 48 H 144 V 34 Z">
             <Path.LayoutTransform>
                 <ScaleTransform ScaleX="0.5" ScaleY="0.5"/>
@@ -62,7 +62,7 @@
               Width="256"
               Height="256"
               VerticalAlignment="Bottom"
-              Stroke="White"
+              Stroke="{StaticResource PathFillColor}"
               StrokeThickness="16"
               Data="M 212.58,185.03 C 198.2,206.32 169.30,230 128,230 71.67,230 26,184.33 26,128 M 43.42,70.97 C 57.80,49.68 86.7,26 128,26 c 56.33,0 102,45.67 102,102">
             <Path.LayoutTransform>
@@ -91,7 +91,7 @@
               Width="256"
               Height="256"
               VerticalAlignment="Bottom"
-              Fill="White"
+              Fill="{StaticResource PathFillColor}"
               Data="m 26,84 -26,45 52,0 z">
             <Path.LayoutTransform>
                 <ScaleTransform ScaleX="0.5" ScaleY="0.5"/>
@@ -119,7 +119,7 @@
               Width="256"
               Height="256"
               VerticalAlignment="Bottom"
-              Fill="White"
+              Fill="{StaticResource PathFillColor}"
               Data="m 256,127 -52,0 26,45 z">
             <Path.LayoutTransform>
                 <ScaleTransform ScaleX="0.5" ScaleY="0.5"/>
