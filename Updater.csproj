@@ -35,7 +35,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Properties\Updater.ico</ApplicationIcon>
+    <ApplicationIcon>Updater.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -101,7 +101,7 @@
     <Resource Include="background-image.jpg" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Properties\Updater.ico" />
+    <Resource Include="Updater.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
