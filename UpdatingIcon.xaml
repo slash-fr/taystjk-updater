@@ -1,0 +1,101 @@
+﻿<UserControl x:Class="Updater.UpdatingIcon"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Updater"
+             mc:Ignorable="d" 
+             d:DesignHeight="128" d:DesignWidth="128">
+    <Grid>
+        <Path x:Name="LetterJ"
+              Width="128"
+              Height="128"
+              Fill="{StaticResource PathFillColor}"
+              Data="m 60,16.5 -4,0.5 v 7 h -4 v 40 l -18,18 v 12 l 26,-26 z"/>
+
+        <Path x:Name="LetterJSupport"
+              Width="128"
+              Height="128"
+              Fill="{StaticResource PathFillColor}"
+              Data="m 60,77 -8,8 v 25.5 l 8,1"/>
+
+        <Path x:Name="LetterK"
+              Width="128"
+              Height="128"
+              Fill="{StaticResource PathFillColor}"
+              Data="m 68,16.5 0,95 8,-1 0,-39.5 20,20 v -12 l -20,-20 12,-12 V 36 L 76,48 V 24 H 72 V 17 Z"/>
+
+        <Path x:Name="OpenCircle"
+              Width="128"
+              Height="128"
+              Stroke="{StaticResource PathFillColor}"
+              StrokeThickness="8"
+              Data="M 21.709999,35.485415 C 28.901605,24.840436 43.34845,13 64,13 c 28.166522,0 51,22.833478 51,51 m -8.71,28.514585 C 99.098395,103.15956 84.65155,115 64,115 35.833478,115 13,92.166522 13,64">
+
+            <Path.RenderTransform>
+                <RotateTransform Angle="0" CenterX="64" CenterY="64"/>
+            </Path.RenderTransform>
+            <Path.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation
+                                From="0"
+                                To="360"
+                                Duration="00:00:01.5"
+                                Storyboard.TargetProperty="(Path.RenderTransform).(RotateTransform.Angle)"
+                                RepeatBehavior="Forever"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Path.Triggers>
+        </Path>
+
+        <Path x:Name="LeftTriangle"
+              Width="128"
+              Height="128"
+              Fill="{StaticResource PathFillColor}"
+              Data="m 13,42 -13,23 26,0 z">
+            <Path.RenderTransform>
+                <RotateTransform Angle="0" CenterX="64" CenterY="64"/>
+            </Path.RenderTransform>
+            <Path.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation
+                                From="0"
+                                To="360"
+                                Duration="00:00:01.5"
+                                Storyboard.TargetProperty="(Path.RenderTransform).(RotateTransform.Angle)"
+                                RepeatBehavior="Forever"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Path.Triggers>
+        </Path>
+        <Path x:Name="RightTriangle"
+              Width="128"
+              Height="128"
+              Fill="{StaticResource PathFillColor}"
+              Data="m 128,63 -26,0 13,23 z">
+            <Path.RenderTransform>
+                <RotateTransform Angle="0" CenterX="64" CenterY="64"/>
+            </Path.RenderTransform>
+            <Path.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation
+                                From="0"
+                                To="360"
+                                Duration="00:00:01.5"
+                                Storyboard.TargetProperty="(Path.RenderTransform).(RotateTransform.Angle)"
+                                RepeatBehavior="Forever"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Path.Triggers>
+        </Path>
+    </Grid>
+</UserControl>
