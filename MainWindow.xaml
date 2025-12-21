@@ -12,7 +12,8 @@
         Height="360"
         ShowInTaskbar="False"
         Topmost="True"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Loaded="Window_Loaded">
     <Grid xmlns:src="clr-namespace:Updater">
         <Grid.Background>
             <ImageBrush ImageSource="/background-image.jpg"/>
@@ -21,12 +22,20 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="200" />
             <RowDefinition Height="60" />
-            <RowDefinition Height="60" />
+            <RowDefinition Height="100" />
         </Grid.RowDefinitions>
 
-        <src:UpdatingIcon Grid.Row="0" VerticalAlignment="Bottom"/>
+        <src:UpdatingIcon x:Name="UpdatingIcon"
+                          Grid.Row="0"
+                          VerticalAlignment="Bottom"/>
 
-        <Label Content="Checking for updates…"
+        <src:ErrorIcon x:Name="ErrorIcon"
+                       Grid.Row="0"
+                       VerticalAlignment="Bottom"
+                       Visibility="Hidden"/>
+
+        <Label x:Name="StatusLabel"
+               Content="Checking for updates…"
                Grid.Row="1"
                HorizontalAlignment="Center"
                HorizontalContentAlignment="Center"
@@ -35,11 +44,28 @@
                Foreground="White">
         </Label>
 
-        <Button Content="Skip"
+        <Button x:Name="SkipButton"
+                Content="Skip"
+                Click="SkipButton_Click"
                 Grid.Row="2"
                 Width="60"
                 Height="30"
+                VerticalAlignment="Top"
+                Margin="0 10 0 0"
+                Visibility="Hidden"
                 Style="{StaticResource DefaultButtonStyle}">
         </Button>
+
+        <Button x:Name="OkButton"
+                Content="OK"
+                Click="OkButton_Click"
+                Grid.Row="2"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Width="60"
+                Height="30"
+                Margin="0 0 40 30"
+                Style="{StaticResource DefaultButtonStyle}"
+                Visibility="Hidden"/>
     </Grid>
 </Window>
