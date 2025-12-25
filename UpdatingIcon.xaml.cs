@@ -1,25 +1,36 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Windows.Media.Animation;
 
 namespace Updater
 {
     public partial class UpdatingIcon : UserControl
     {
+
         public UpdatingIcon()
         {
             InitializeComponent();
+
+            ((Storyboard)OpenCircle.Resources["Rotate"]).Begin(this, true); // Controllable
+            ((Storyboard)OpenCircleClone.Resources["Rotate"]).Begin(this, true); // Controllable
+            ((Storyboard)LeftTriangle.Resources["Rotate"]).Begin(this);
+            ((Storyboard)RightTriangle.Resources["Rotate"]).Begin(this);
+        }
+
+        public async Task MorphIntoCircle()
+        {
+            ((Storyboard)LeftTriangle.Resources["Collapse"]).Begin(this);
+            ((Storyboard)RightTriangle.Resources["Collapse"]).Begin(this);
+            ((Storyboard)LetterJ.Resources["Collapse"]).Begin(this);
+            ((Storyboard)LetterJSupport.Resources["Collapse"]).Begin(this);
+            ((Storyboard)LetterK.Resources["Collapse"]).Begin(this);
+
+            ((Storyboard)OpenCircle.Resources["Rotate"]).Pause(this);
+            OpenCircleClone.Visibility = Visibility.Visible;
+
+            await Task.Delay(250);
+            ((Storyboard)OpenCircleClone.Resources["Rotate"]).Pause(this);
         }
     }
 }

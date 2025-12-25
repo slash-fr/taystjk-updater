@@ -44,14 +44,14 @@ namespace Updater
         {
             SkipButton.IsEnabled = false;
             StatusLabel.Content = "Skipped. Launching...";
-            // TODO: Stop the "updating" icon animation
+            _ = UpdatingIcon.MorphIntoCircle();
 
             // TODO: Cancel any ongoing tasks
 
             await Task.Run(() => updater.LaunchTaystJK());
 
-            // Close the "splash screen" (updater) 1 second later
-            await Task.Delay(1000);
+            // Close the "splash screen" (updater) 0.5 second later
+            await Task.Delay(500);
             Close();
         }
     }

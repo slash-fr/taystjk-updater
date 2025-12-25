@@ -11,19 +11,58 @@
               Width="128"
               Height="128"
               Fill="{StaticResource PathFillColor}"
-              Data="m 60,16.5 -4,0.5 v 7 h -4 v 40 l -18,18 v 12 l 26,-26 z"/>
+              Data="m 60,16.5 -4,0.5 v 7 h -4 v 40 l -18,18 v 12 l 26,-26 z">
+            <Path.Clip>
+                <RectangleGeometry x:Name="LetterJMask" Rect="0,0,128,128"/>
+            </Path.Clip>
+            <Path.Resources>
+                <Storyboard x:Key="Collapse">
+                    <RectAnimation
+                        To="64,0,128,128"
+                        Duration="00:00:00.5"
+                        Storyboard.TargetName="LetterJMask"
+                        Storyboard.TargetProperty="Rect"/>
+                </Storyboard>
+            </Path.Resources>
+        </Path>
 
         <Path x:Name="LetterJSupport"
               Width="128"
               Height="128"
               Fill="{StaticResource PathFillColor}"
-              Data="m 60,77 -8,8 v 25.5 l 8,1"/>
+              Data="m 60,77 -8,8 v 25.5 l 8,1">
+            <Path.Clip>
+                <RectangleGeometry x:Name="LetterJSupportMask" Rect="0,0,128,128"/>
+            </Path.Clip>
+            <Path.Resources>
+                <Storyboard x:Key="Collapse">
+                    <RectAnimation
+                        To="64,0,128,128"
+                        Duration="00:00:00.5"
+                        Storyboard.TargetName="LetterJSupportMask"
+                        Storyboard.TargetProperty="Rect"/>
+                </Storyboard>
+            </Path.Resources>
+        </Path>
 
         <Path x:Name="LetterK"
               Width="128"
               Height="128"
               Fill="{StaticResource PathFillColor}"
-              Data="m 68,16.5 0,95 8,-1 0,-39.5 20,20 v -12 l -20,-20 12,-12 V 36 L 76,48 V 24 H 72 V 17 Z"/>
+              Data="m 68,16.5 0,95 8,-1 0,-39.5 20,20 v -12 l -20,-20 12,-12 V 36 L 76,48 V 24 H 72 V 17 Z">
+            <Path.Clip>
+                <RectangleGeometry x:Name="LetterKMask" Rect="0,0,128,128"/>
+            </Path.Clip>
+            <Path.Resources>
+                <Storyboard x:Key="Collapse">
+                    <RectAnimation
+                        To="0,0,64,128"
+                        Duration="00:00:00.5"
+                        Storyboard.TargetName="LetterKMask"
+                        Storyboard.TargetProperty="Rect"/>
+                </Storyboard>
+            </Path.Resources>
+        </Path>
 
         <Path x:Name="OpenCircle"
               Width="128"
@@ -31,71 +70,123 @@
               Stroke="{StaticResource PathFillColor}"
               StrokeThickness="8"
               Data="M 21.709999,35.485415 C 28.901605,24.840436 43.34845,13 64,13 c 28.166522,0 51,22.833478 51,51 m -8.71,28.514585 C 99.098395,103.15956 84.65155,115 64,115 35.833478,115 13,92.166522 13,64">
-
             <Path.RenderTransform>
-                <RotateTransform Angle="0" CenterX="64" CenterY="64"/>
+                <RotateTransform x:Name="OpenCircleRotation" Angle="0" CenterX="64" CenterY="64"/>
             </Path.RenderTransform>
-            <Path.Triggers>
-                <EventTrigger RoutedEvent="Loaded">
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <DoubleAnimation
-                                From="0"
-                                To="360"
-                                Duration="00:00:01.5"
-                                Storyboard.TargetProperty="(Path.RenderTransform).(RotateTransform.Angle)"
-                                RepeatBehavior="Forever"/>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>
-            </Path.Triggers>
+            <Path.Resources>
+                <Storyboard x:Key="Rotate">
+                    <DoubleAnimation
+                        From="0"
+                        To="360"
+                        Duration="00:00:01.5"
+                        Storyboard.TargetName="OpenCircleRotation"
+                        Storyboard.TargetProperty="Angle"
+                        RepeatBehavior="Forever"/>
+                </Storyboard>
+            </Path.Resources>
+        </Path>
+        
+        <Path x:Name="OpenCircleClone"
+              Visibility="Hidden"
+              Width="128"
+              Height="128"
+              Stroke="{StaticResource PathFillColor}"
+              StrokeThickness="8"
+              Data="M 21.709999,35.485415 C 28.901605,24.840436 43.34845,13 64,13 c 28.166522,0 51,22.833478 51,51 m -8.71,28.514585 C 99.098395,103.15956 84.65155,115 64,115 35.833478,115 13,92.166522 13,64">
+            <Path.RenderTransform>
+                <RotateTransform x:Name="OpenCircleCloneRotation" Angle="0" CenterX="64" CenterY="64"/>
+            </Path.RenderTransform>
+            <Path.Resources>
+                <Storyboard x:Key="Rotate">
+                    <DoubleAnimation
+                        From="0"
+                        To="360"
+                        Duration="00:00:01.5"
+                        Storyboard.TargetName="OpenCircleCloneRotation"
+                        Storyboard.TargetProperty="Angle"
+                        RepeatBehavior="Forever"/>
+                </Storyboard>
+            </Path.Resources>
         </Path>
 
         <Path x:Name="LeftTriangle"
               Width="128"
               Height="128"
-              Fill="{StaticResource PathFillColor}"
-              Data="m 13,42 -13,23 26,0 z">
+              Fill="{StaticResource PathFillColor}">
             <Path.RenderTransform>
-                <RotateTransform Angle="0" CenterX="64" CenterY="64"/>
+                <RotateTransform x:Name="LeftTriangleRotation" Angle="0" CenterX="64" CenterY="64"/>
             </Path.RenderTransform>
-            <Path.Triggers>
-                <EventTrigger RoutedEvent="Loaded">
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <DoubleAnimation
-                                From="0"
-                                To="360"
-                                Duration="00:00:01.5"
-                                Storyboard.TargetProperty="(Path.RenderTransform).(RotateTransform.Angle)"
-                                RepeatBehavior="Forever"/>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>
-            </Path.Triggers>
+            <Path.Data>
+                <PathGeometry>
+                    <PathFigure IsClosed="True" StartPoint="13,42">
+                        <LineSegment x:Name="LeftTriangleLeftPoint" Point="0,65"/>
+                        <LineSegment x:Name="LeftTriangleRightPoint" Point="26,65"/>
+                    </PathFigure>
+                </PathGeometry>
+            </Path.Data>
+            <Path.Resources>
+                <Storyboard x:Key="Rotate">
+                    <DoubleAnimation
+                        From="0"
+                        To="360"
+                        Duration="00:00:01.5"
+                        Storyboard.TargetName="LeftTriangleRotation"
+                        Storyboard.TargetProperty="Angle"
+                        RepeatBehavior="Forever"/>
+                </Storyboard>
+                <Storyboard x:Key="Collapse">
+                    <PointAnimation
+                        To="15,65"
+                        Duration="00:00:00.5"
+                        Storyboard.TargetName="LeftTriangleLeftPoint"
+                        Storyboard.TargetProperty="Point"/>
+                    <PointAnimation
+                        To="15,65"
+                        Duration="00:00:00.5"
+                        Storyboard.TargetName="LeftTriangleRightPoint"
+                        Storyboard.TargetProperty="Point"/>
+                </Storyboard>
+            </Path.Resources>
         </Path>
+
         <Path x:Name="RightTriangle"
               Width="128"
               Height="128"
-              Fill="{StaticResource PathFillColor}"
-              Data="m 128,63 -26,0 13,23 z">
+              Fill="{StaticResource PathFillColor}">
             <Path.RenderTransform>
-                <RotateTransform Angle="0" CenterX="64" CenterY="64"/>
+                <RotateTransform x:Name="RightTriangleRotation" Angle="0" CenterX="64" CenterY="64"/>
             </Path.RenderTransform>
-            <Path.Triggers>
-                <EventTrigger RoutedEvent="Loaded">
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <DoubleAnimation
-                                From="0"
-                                To="360"
-                                Duration="00:00:01.5"
-                                Storyboard.TargetProperty="(Path.RenderTransform).(RotateTransform.Angle)"
-                                RepeatBehavior="Forever"/>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>
-            </Path.Triggers>
+            <Path.Data>
+                <PathGeometry>
+                    <PathFigure IsClosed="True" StartPoint="115,86">
+                        <LineSegment x:Name="RightTriangleRightPoint" Point="128,63"/>
+                        <LineSegment x:Name="RightTriangleLeftPoint" Point="102,63"/>
+                    </PathFigure>
+                </PathGeometry>
+            </Path.Data>
+            <Path.Resources>
+                <Storyboard x:Key="Rotate">
+                    <DoubleAnimation
+                        From="0"
+                        To="360"
+                        Duration="00:00:01.5"
+                        Storyboard.TargetName="RightTriangleRotation"
+                        Storyboard.TargetProperty="Angle"
+                        RepeatBehavior="Forever"/>
+                </Storyboard>
+                <Storyboard x:Key="Collapse">
+                    <PointAnimation
+                        To="115,63"
+                        Duration="00:00:00.5"
+                        Storyboard.TargetName="RightTriangleRightPoint"
+                        Storyboard.TargetProperty="Point"/>
+                    <PointAnimation
+                        To="115,63"
+                        Duration="00:00:00.5"
+                        Storyboard.TargetName="RightTriangleLeftPoint"
+                        Storyboard.TargetProperty="Point"/>
+                </Storyboard>
+            </Path.Resources>
         </Path>
     </Grid>
 </UserControl>
