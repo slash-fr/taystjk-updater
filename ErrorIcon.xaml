@@ -7,21 +7,68 @@
              mc:Ignorable="d" 
              d:DesignHeight="128" d:DesignWidth="128">
     <Grid>
-        <Ellipse Width="102"
-                 Height="102"
+        <Ellipse Width="110"
+                 Height="110"
                  Canvas.Top="64"
                  Canvas.Left="64"
                  StrokeThickness="8"
                  Stroke="{StaticResource PathFillColor}"/>
 
-        <Path Width="128"
+        <Path x:Name="Bar"
+              Width="128"
               Height="128"
-              Data="M 43,37 37,43 85,91 91,85 z"
-              Fill="{StaticResource PathFillColor}"/>
-        
-        <Path Width="128"
+              Data="M 68,36 60,36 60,76 68,76 z"
+              Fill="{StaticResource PathFillColor}">
+            <Path.Clip>
+                <RectangleGeometry x:Name="BarMask" Rect="0,0,128,36"/>
+            </Path.Clip>
+            <Path.Resources>
+                <Storyboard x:Key="AnimateIn">
+                    <RectAnimation
+                        To="0,0,128,76"
+                        Duration="00:00:00.25"
+                        Storyboard.TargetName="BarMask"
+                        Storyboard.TargetProperty="Rect">
+                        <RectAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseIn" />
+                        </RectAnimation.EasingFunction>
+                    </RectAnimation>
+                </Storyboard>
+            </Path.Resources>
+        </Path>
+
+        <Path x:Name="Dot"
+              Width="128"
               Height="128"
-              Data="M 91,43 85,37 37,85 43,91 z"
-              Fill="{StaticResource PathFillColor}"/>
+              Data="M 68,84 60,84 60,92 68,92 z"
+              Fill="{StaticResource PathFillColor}">
+            <Path.RenderTransform>
+                <ScaleTransform x:Name="DotScale" ScaleX="0" ScaleY="0" CenterX="64" CenterY="88"/>
+            </Path.RenderTransform>
+            <Path.Resources>
+                <Storyboard x:Key="AnimateIn">
+                    <DoubleAnimationUsingKeyFrames
+                        Storyboard.TargetName="DotScale"
+                        Storyboard.TargetProperty="ScaleX">
+                        <EasingDoubleKeyFrame Value="0" KeyTime="00:00:00.25"/>
+                        <EasingDoubleKeyFrame Value="1" KeyTime="00:00:00.50">
+                            <EasingDoubleKeyFrame.EasingFunction>
+                                <CubicEase EasingMode="EaseIn" />
+                            </EasingDoubleKeyFrame.EasingFunction>
+                        </EasingDoubleKeyFrame>
+                    </DoubleAnimationUsingKeyFrames>
+                    <DoubleAnimationUsingKeyFrames
+                        Storyboard.TargetName="DotScale"
+                        Storyboard.TargetProperty="ScaleY">
+                        <EasingDoubleKeyFrame Value="0" KeyTime="00:00:00.25"/>
+                        <EasingDoubleKeyFrame Value="1" KeyTime="00:00:00.50">
+                            <EasingDoubleKeyFrame.EasingFunction>
+                                <CubicEase EasingMode="EaseIn" />
+                            </EasingDoubleKeyFrame.EasingFunction>
+                        </EasingDoubleKeyFrame>
+                    </DoubleAnimationUsingKeyFrames>
+                </Storyboard>
+            </Path.Resources>
+        </Path>
     </Grid>
 </UserControl>

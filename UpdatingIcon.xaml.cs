@@ -31,6 +31,7 @@ namespace Updater
 
             await Task.Delay(250);
             ((Storyboard)OpenCircleClone.Resources["Rotate"]).Pause(this);
+            await Task.Delay(250); // Wait until the "JK" logo finishes collapsing
         }
     }
 }

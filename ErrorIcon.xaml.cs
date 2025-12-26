@@ -1,28 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+﻿using System.Windows.Controls;
+using System.Windows.Media.Animation;
 
 namespace Updater
 {
-    /// <summary>
-    /// Interaction logic for ErrorIcon.xaml
-    /// </summary>
     public partial class ErrorIcon : UserControl
     {
         public ErrorIcon()
         {
             InitializeComponent();
+        }
+
+        /// <summary>
+        /// Play an animation to show the full icon
+        /// </summary>
+        public void AnimateIn()
+        {
+            ((Storyboard)Bar.Resources["AnimateIn"]).Begin(this);
+            ((Storyboard)Dot.Resources["AnimateIn"]).Begin(this);
         }
     }
 }

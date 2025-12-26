@@ -23,16 +23,25 @@ namespace Updater
             }
             catch (FileNotFoundException)
             {
-                StatusLabel.Content = "ERROR: TaystJK executable was not found!";
-                UpdatingIcon.Visibility = Visibility.Hidden;
-                ErrorIcon.Visibility = Visibility.Visible;
-                OkButton.Visibility = Visibility.Visible;
+                // TODO: log the error
+                DisplayError("ERROR: TaystJK executable was not found!", true);
                 return;
             }
 
             SkipButton.Visibility = Visibility.Visible;
 
             // TODO: check for a new version
+        }
+
+        private async void DisplayError(string errorMessage, bool preventsGameLaunch = false)
+        {
+            StatusLabel.Content = errorMessage;
+            await UpdatingIcon.MorphIntoCircle();
+            UpdatingIcon.Visibility = Visibility.Hidden;
+            ErrorIcon.Visibility = Visibility.Visible;
+            ErrorIcon.AnimateIn();
+            OkButton.Visibility = Visibility.Visible;
+            // TODO: "Launch anyway" button (preventsGameLaunch == false)
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
@@ -44,14 +53,8 @@ namespace Updater
         {
             SkipButton.IsEnabled = false;
             StatusLabel.Content = "Skipped. Launching...";
-            _ = UpdatingIcon.MorphIntoCircle();
-
-            // TODO: Cancel any ongoing tasks
-
             await Task.Run(() => updater.LaunchTaystJK());
-
-            // Close the "splash screen" (updater) 0.5 second later
-            await Task.Delay(500);
+            await UpdatingIcon.MorphIntoCircle();
             Close();
         }
     }
