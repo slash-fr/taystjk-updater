@@ -35,7 +35,7 @@
                        Visibility="Hidden"/>
 
         <Label x:Name="StatusLabel"
-               Content="Checking for updates…"
+               Content="Initializing..."
                Grid.Row="1"
                HorizontalAlignment="Center"
                HorizontalContentAlignment="Center"
@@ -56,16 +56,52 @@
                 Style="{StaticResource DefaultButtonStyle}">
         </Button>
 
-        <Button x:Name="OkButton"
-                Content="OK"
-                Click="OkButton_Click"
-                Grid.Row="2"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Bottom"
+        <Grid x:Name="ButtonRow"
+              Grid.Row="2"
+              VerticalAlignment="Bottom"
+              Height="30"
+              Margin="10 30 10 30"
+              Visibility="Hidden"
+              Opacity="0">
+            <Grid.Resources>
+                <Storyboard x:Key="AnimateIn">
+                    <DoubleAnimation
+                        To="1"
+                        Duration="00:00:00.5"
+                        Storyboard.TargetName="ButtonRow"
+                        Storyboard.TargetProperty="Opacity"/>
+                </Storyboard>
+            </Grid.Resources>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Button x:Name="LogsButton"
+                Grid.Column="0"
+                Content="Open logs..."
+                Click="LogsButton_Click"
+                Width="100"
+                Height="30"
+                Margin="20 0 0 0"
+                Style="{StaticResource DefaultButtonStyle}"/>
+            <Button x:Name="ExitButton"
+                Grid.Column="2"
+                Content="Exit"
+                Click="ExitButton_Click"
                 Width="60"
                 Height="30"
-                Margin="0 0 40 30"
-                Style="{StaticResource DefaultButtonStyle}"
-                Visibility="Hidden"/>
+                Margin="0 0 20 0"
+                Style="{StaticResource DefaultButtonStyle}"/>
+            <Button x:Name="LaunchButton"
+                Grid.Column="3"
+                Content="Launch anyway"
+                Click="LaunchButton_Click"
+                Width="120"
+                Height="30"
+                Margin="0 0 20 0"
+                Style="{StaticResource DefaultButtonStyle}"/>
+        </Grid>
     </Grid>
 </Window>

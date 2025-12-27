@@ -34,6 +34,19 @@
                         </RectAnimation.EasingFunction>
                     </RectAnimation>
                 </Storyboard>
+                
+                <Storyboard x:Key="AnimateOut">
+                    <RectAnimation
+                        From="0,0,128,76"
+                        To="0,76,128,76"
+                        Duration="00:00:00.25"
+                        Storyboard.TargetName="BarMask"
+                        Storyboard.TargetProperty="Rect">
+                        <RectAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseIn" />
+                        </RectAnimation.EasingFunction>
+                    </RectAnimation>
+                </Storyboard>
             </Path.Resources>
         </Path>
 
@@ -62,6 +75,29 @@
                         Storyboard.TargetProperty="ScaleY">
                         <EasingDoubleKeyFrame Value="0" KeyTime="00:00:00.25"/>
                         <EasingDoubleKeyFrame Value="1" KeyTime="00:00:00.50">
+                            <EasingDoubleKeyFrame.EasingFunction>
+                                <CubicEase EasingMode="EaseIn" />
+                            </EasingDoubleKeyFrame.EasingFunction>
+                        </EasingDoubleKeyFrame>
+                    </DoubleAnimationUsingKeyFrames>
+                </Storyboard>
+
+                <Storyboard x:Key="AnimateOut">
+                    <DoubleAnimationUsingKeyFrames
+                        Storyboard.TargetName="DotScale"
+                        Storyboard.TargetProperty="ScaleX">
+                        <EasingDoubleKeyFrame Value="1" KeyTime="00:00:00.25"/>
+                        <EasingDoubleKeyFrame Value="0" KeyTime="00:00:00.50">
+                            <EasingDoubleKeyFrame.EasingFunction>
+                                <CubicEase EasingMode="EaseIn" />
+                            </EasingDoubleKeyFrame.EasingFunction>
+                        </EasingDoubleKeyFrame>
+                    </DoubleAnimationUsingKeyFrames>
+                    <DoubleAnimationUsingKeyFrames
+                        Storyboard.TargetName="DotScale"
+                        Storyboard.TargetProperty="ScaleY">
+                        <EasingDoubleKeyFrame Value="1" KeyTime="00:00:00.25"/>
+                        <EasingDoubleKeyFrame Value="0" KeyTime="00:00:00.50">
                             <EasingDoubleKeyFrame.EasingFunction>
                                 <CubicEase EasingMode="EaseIn" />
                             </EasingDoubleKeyFrame.EasingFunction>

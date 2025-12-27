@@ -61,6 +61,7 @@
     <Compile Include="ErrorIcon.xaml.cs">
       <DependentUpon>ErrorIcon.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UpdateCheckResult.cs" />
     <Compile Include="UpdaterLogic.cs" />
     <Compile Include="UpdatingIcon.xaml.cs">
       <DependentUpon>UpdatingIcon.xaml</DependentUpon>
