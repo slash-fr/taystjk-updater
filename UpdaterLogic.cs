@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -145,6 +146,10 @@ namespace Updater
         {
             Process.Start(pathToTaystJkExe, commandLineArgsAsString);
         }
+        
+        ////////////////////////////////////////////////////////////////////////
+        // Private methods
+        // ↓
 
         /// <summary>
         /// Parses the command line arguments, initializes commandLineArgsAsString,
@@ -216,6 +221,63 @@ namespace Updater
             // TODO: log the error
             // "TaystJK executable not found."
             return false;
+        }
+
+        /// <summary>
+        /// Try to find the current commit hash from the TaystJK executable (best-effort).
+        /// </summary>
+        /// <returns>The commit hash if found, null otherwise</returns>
+        private string GetCurrentTaystJkCommitHash()
+        {
+            // Ugliest method ever
+            try
+            {
+                if (new FileInfo(pathToTaystJkExe).Length > 10e7)
+                {
+                    // Don't load a file larger than 10MB into memory
+                    // TODO: Add a log message
+                    return null;
+                }
+
+                string taystJkExeContent = File.ReadAllText(pathToTaystJkExe, System.Text.Encoding.ASCII); // Ouch
+                if (taystJkExeContent.Length < 20)
+                {
+                    // TODO: Add a log message
+                    return null;
+                }
+
+                string prefix = "TaystJK: latest-";
+
+                int index = 0;
+                do
+                {
+                    index = taystJkExeContent.IndexOf(prefix, index);
+                    if (index == -1)
+                    {
+                        // TODO: Add a log message?
+                        return null;
+                    }
+
+                    string hashCandidate = taystJkExeContent.Substring(
+                        index + prefix.Length,
+                        Math.Min(41, taystJkExeContent.Length - index - prefix.Length)
+                    );
+                    Match match = Regex.Match(hashCandidate, @"^([0-9A-Fa-f]{4,40})[ \0\n]");
+                    if (match.Success)
+                    {
+                        return match.Captures[0].Value;
+                    }
+
+                    index += prefix.Length;
+                }
+                while (true); // Yes.
+            }
+            catch (Exception e)
+            {
+                // TODO: log the error
+                // Other than that, fail silently. (This whole method is a dirty hack, anyway...)
+                return null;
+            }
         }
     }
 }
