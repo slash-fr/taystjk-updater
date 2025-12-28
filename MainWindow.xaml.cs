@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -8,6 +9,7 @@ namespace Updater
 {
     public partial class MainWindow : Window
     {
+        private Logger logger;
         private UpdaterLogic updater;
         private CancellationTokenSource cancellationTokenSource;
 
@@ -19,7 +21,45 @@ namespace Updater
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            updater = new UpdaterLogic();
+            try
+            {
+                logger = new Logger();
+                await PerformUpdate(logger);
+            }
+            catch (UnloggableErrorException exception)
+            {
+                MessageBox.Show(
+                    "An error occurred:\n"
+                    + "\n"
+                    + exception.Message + "\n"
+                    + "\n"
+                    + "------------------------------------------\n"
+                    + "\n"
+                    + "Additionally: Could not write the error above to the log file!\n"
+                    + "\n"
+                    + exception.InnerException.GetType().Name + ":\n"
+                    + exception.InnerException.Message,
+                    "Error!",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+                Close();
+            }
+            catch (Exception exception)
+            {
+                MessageBox.Show(
+                    exception.Message,
+                    exception.GetType().ToString(), // Caption
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+                Close();
+            }
+        }
+
+        private async Task PerformUpdate(Logger logger)
+        { 
+            updater = new UpdaterLogic(logger);
 
             if (!updater.InitializeUpdater())
             {
@@ -30,9 +70,12 @@ namespace Updater
             StatusLabel.Content = "Checking for TaystJK updates...";
             SkipButton.Visibility = Visibility.Visible;
 
-            UpdateCheckResult updateCheckResult = await updater.CheckTaystJkUpdate();
+            UpdateCheckResult updateCheckResult = await Task.Run(updater.CheckTaystJkUpdate);
 
-            if (cancellationTokenSource.IsCancellationRequested) { return; }
+            if (cancellationTokenSource.IsCancellationRequested)
+            {
+                return;
+            }
 
             if (updateCheckResult == UpdateCheckResult.Error)
             {
@@ -68,32 +111,38 @@ namespace Updater
             };
             if (!await updater.DownloadTaystJkUpdate(cancellationTokenSource.Token, progress))
             {
-                if (cancellationTokenSource.IsCancellationRequested) { return; }
                 DisplayError("Failed to download the new TaystJK version!");
                 return;
             }
 
-            if (cancellationTokenSource.IsCancellationRequested) { return; }
+            if (cancellationTokenSource.IsCancellationRequested)
+            {
+                return;
+            }
 
             StatusLabel.Content = "Unpacking TaystJK update...";
             if (!await updater.UnpackTaystJkUpdate())
             {
-                if (cancellationTokenSource.IsCancellationRequested) { return; }
                 DisplayError("Failed to unpack the new TaystJK version!");
                 return;
             }
 
-            if (cancellationTokenSource.IsCancellationRequested) { return; }
+            if (cancellationTokenSource.IsCancellationRequested)
+            {
+                return;
+            }
 
             StatusLabel.Content = "Backing up current TaystJK files...";
             if (!await updater.BackupTaystJkFiles())
             {
-                if (cancellationTokenSource.IsCancellationRequested) { return; }
                 DisplayError("Failed to backup the current TaystJK version!");
                 return;
             }
 
-            if (cancellationTokenSource.IsCancellationRequested) { return; }
+            if (cancellationTokenSource.IsCancellationRequested)
+            {
+                return;
+            }
 
             StatusLabel.Content = "Applying TaystJK update...";
             SkipButton.Visibility = Visibility.Hidden; // Skipping would leave a partially updated version...
@@ -118,6 +167,11 @@ namespace Updater
         /// <param name="preventsGameLaunch">If true, the "Launch anyway" button won't be shown</param>
         private async void DisplayError(string errorMessage, bool preventsGameLaunch = false)
         {
+            if (cancellationTokenSource.IsCancellationRequested)
+            {
+                // Don't display the error if the user has clicked the "Skip" button (the updater will close soon)
+                return;
+            }
             StatusLabel.Content = errorMessage;
             SkipButton.Visibility = Visibility.Hidden;
             if (preventsGameLaunch)
@@ -132,9 +186,19 @@ namespace Updater
             await ErrorIcon.AnimateIn();
         }
 
-        private void LogsButton_Click(object sender, RoutedEventArgs e)
+        private async void LogsButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO
+            LogsButton.IsEnabled = false;
+
+            new Process() {
+                StartInfo = new ProcessStartInfo(logger.LogFilePath)
+                {
+                    UseShellExecute = true
+                }
+            }.Start();
+
+            await Task.Delay(2000);
+            LogsButton.IsEnabled = true;
         }
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)
@@ -155,6 +219,7 @@ namespace Updater
 
         private async void SkipButton_Click(object sender, RoutedEventArgs e)
         {
+            logger.Info("Skipping...");
             SkipButton.IsEnabled = false;
             StatusLabel.Content = "Skipped. Launching...";
             cancellationTokenSource.Cancel();

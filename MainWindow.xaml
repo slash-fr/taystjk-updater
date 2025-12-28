@@ -80,9 +80,9 @@
             </Grid.ColumnDefinitions>
             <Button x:Name="LogsButton"
                 Grid.Column="0"
-                Content="Open logs..."
+                Content="Open log file"
                 Click="LogsButton_Click"
-                Width="100"
+                Width="110"
                 Height="30"
                 Margin="20 0 0 0"
                 Style="{StaticResource DefaultButtonStyle}"/>

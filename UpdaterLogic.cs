@@ -17,11 +17,13 @@ namespace Updater
             "taystjk.x86.exe",
         };
 
+        private readonly Logger logger;
         private string commandLineArgsAsString = "";
         private string pathToTaystJkExe = "";
 
-        public UpdaterLogic()
+        public UpdaterLogic(Logger logger)
         {
+            this.logger = logger;
         }
 
         public bool InitializeUpdater()
@@ -36,7 +38,7 @@ namespace Updater
         {
             if (String.IsNullOrEmpty(pathToTaystJkExe))
             {
-                throw new InvalidOperationException("CheckTaystJkUpdate() MUST be called AFTER InitializeUpdater()");
+                throw new InvalidOperationException("CheckTaystJkUpdate() must be called AFTER InitializeUpdater()");
             }
 
             // TODO: actually check for updates
@@ -45,13 +47,17 @@ namespace Updater
             switch (3)
             {
                 case 0:
-                    // TODO: log the error
+                    logger.Error("An error occurred while checking for TaystJK updates."); // TODO: Be more specific
                     return UpdateCheckResult.Error;
                 case 1:
+                    logger.Info('"' + pathToTaystJkExe + '"' + " was already up to date.");
                     return UpdateCheckResult.AlreadyUpToDate;
                 case 2:
+                    logger.Info("Already checked less than an hour ago for " + '"' + pathToTaystJkExe + '"' + '.');
                     return UpdateCheckResult.AlreadyCheckedRecently;
                 default:
+                    // TODO: Be more specific
+                    logger.Info("New version found for " + '"' + pathToTaystJkExe + '"' + '.');
                     return UpdateCheckResult.NeedsUpdate;
             }
         }
@@ -69,18 +75,21 @@ namespace Updater
             switch (1)
             {
                 case 0:
-                    // TODO: log the error
+                    // TODO: Be more specific
+                    logger.Error("An error occurred while downloading the latest TaystJK release.");
                     return false;
                 default:
                     for (int i = 0; i < 100; i++)
                     {
                         if (cancellationToken.IsCancellationRequested)
                         {
+                            logger.Info("Cancelled TaystJK download at " + i + "%");
                             return false;
                         }
                         progress?.Report(i);
                         await Task.Delay(50);
                     }
+                    logger.Info("Downloaded the latest TaystJK release successfully."); // TODO: Be more specific
                     return true;
             }
         }
@@ -97,9 +106,10 @@ namespace Updater
             switch (1)
             {
                 case 0:
-                    // TODO: log the error
+                    logger.Error("An error occurred while unpacking the latest TaystJK release."); // TODO: Be more specific
                     return false;
                 default:
+                    logger.Info("Unpacked the new TaystJK release successfully."); // TODO: Be more specific
                     return true;
             }
         }
@@ -116,9 +126,10 @@ namespace Updater
             switch (1)
             {
                 case 0:
-                    // TODO: log the error
+                    logger.Error("An error occurred while backing up current TaystJK files."); // TODO: Be more specific
                     return false;
                 default:
+                    logger.Info("Backed up current TaystJK files successfully."); // TODO: Be more specific
                     return true;
             }
         }
@@ -135,9 +146,11 @@ namespace Updater
             switch (1)
             {
                 case 0:
-                    // TODO: log the error
+                    // TODO: Be more specific
+                    logger.Error("An error occurred while copying files from the new TaystJK release.");
                     return false;
                 default:
+                    logger.Info("Applied TaystJK update successfully."); // TODO: Be more specific
                     return true;
             }
         }
@@ -203,23 +216,26 @@ namespace Updater
                     return true;
                 }
 
-                // TODO: log the error
-                // "The specified TaystJK executable was not found."
+                logger.Error("The specified TaystJK executable does not exist (" + pathToTaystJkExe + ").");
+
                 return false;
             }
 
             // Otherwise, look for the default executable names, in the current folder
             foreach (string filename in allowedTaystJkFilenames)
             {
-                if (File.Exists(filename))
+                string fullPath = Path.GetFullPath(filename);
+                if (File.Exists(fullPath))
                 {
-                    pathToTaystJkExe = filename;
+                    pathToTaystJkExe = fullPath;
                     return true;
                 }
             }
 
-            // TODO: log the error
-            // "TaystJK executable not found."
+            logger.Error(
+                "TaystJK executable was not found in the current folder (" + Directory.GetCurrentDirectory() + ")."
+            );
+
             return false;
         }
 
@@ -232,17 +248,25 @@ namespace Updater
             // Ugliest method ever
             try
             {
-                if (new FileInfo(pathToTaystJkExe).Length > 10e7)
+                long taystJkExeSize = new FileInfo(pathToTaystJkExe).Length;
+                if (taystJkExeSize > 10e6) // Totally arbitrary limit
                 {
                     // Don't load a file larger than 10MB into memory
-                    // TODO: Add a log message
+                    logger.Warning(
+                        '"' + pathToTaystJkExe + '"' + " was unexpectedly large (" + taystJkExeSize + " bytes) "
+                        + "-> Will not load it to determine its version."
+                    );
                     return null;
                 }
 
                 string taystJkExeContent = File.ReadAllText(pathToTaystJkExe, System.Text.Encoding.ASCII); // Ouch
                 if (taystJkExeContent.Length < 20)
                 {
-                    // TODO: Add a log message
+                    logger.Warning(
+                        "Got unexpectedly small content from " + '"' + pathToTaystJkExe + '"'
+                        + " (" + taystJkExeContent.Length + " bytes) "
+                        + "-> Will not determine the version from its content."
+                    );
                     return null;
                 }
 
@@ -254,7 +278,7 @@ namespace Updater
                     index = taystJkExeContent.IndexOf(prefix, index);
                     if (index == -1)
                     {
-                        // TODO: Add a log message?
+                        logger.Warning("Could not detect the commit hash from " + '"' + pathToTaystJkExe + '"' + ".");
                         return null;
                     }
 
@@ -265,16 +289,25 @@ namespace Updater
                     Match match = Regex.Match(hashCandidate, @"^([0-9A-Fa-f]{4,40})[ \0\n]");
                     if (match.Success)
                     {
-                        return match.Captures[0].Value;
+                        string commitHash = match.Groups[1].Value;
+                        logger.Info(
+                            "Detected commit hash " + '"' + commitHash + '"'
+                            + " in " + '"' + pathToTaystJkExe + '"'
+                        );
+                        return commitHash;
                     }
 
                     index += prefix.Length;
                 }
                 while (true); // Yes.
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                // TODO: log the error
+                logger.Error(
+                    "An error occurred when trying to detect the version from "
+                    + '"' + pathToTaystJkExe + '"' + ".\n"
+                    + exception.ToString()
+                );
                 // Other than that, fail silently. (This whole method is a dirty hack, anyway...)
                 return null;
             }
