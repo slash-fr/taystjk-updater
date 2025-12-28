@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace Updater
@@ -8,12 +9,17 @@ namespace Updater
         public string LogFilePath { get; }
 
         private readonly string logFolderPath;
+        private readonly int processId;
 
         public Logger()
         {
             logFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
                 + Path.DirectorySeparatorChar + "TaystJK Updater";
             LogFilePath = logFolderPath + Path.DirectorySeparatorChar + "Updater.log";
+            using (Process currentProcess = Process.GetCurrentProcess())
+            {
+                processId = currentProcess.Id;
+            }
         }
 
         public void Info(string message)
@@ -60,9 +66,11 @@ namespace Updater
                 Directory.CreateDirectory(logFolderPath);
             }
 
+            string dateTimeString = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
             File.AppendAllText(
                 LogFilePath,
-                DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " - " + level + " - " + message+ "\n"
+                dateTimeString + " - [" + processId + "] - " +  level + " - " + message + "\n"
             );
         }
     }
