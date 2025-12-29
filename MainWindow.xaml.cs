@@ -11,7 +11,7 @@ namespace Updater
     {
         private Logger logger;
         private UpdaterLogic updater;
-        private CancellationTokenSource cancellationTokenSource;
+        private readonly CancellationTokenSource cancellationTokenSource;
 
         public MainWindow()
         {
@@ -87,7 +87,7 @@ namespace Updater
             {
                 StatusLabel.Content = "Already up-to-date. Launching...";
                 SkipButton.Visibility = Visibility.Hidden;
-                await Task.Run(() => updater.LaunchTaystJK());
+                await Task.Run(updater.LaunchTaystJK);
                 await UpdatingIcon.MorphIntoCircle();
                 Close();
                 return;
@@ -97,7 +97,7 @@ namespace Updater
             {
                 StatusLabel.Content = "Already checked in the past hour. Launching...";
                 SkipButton.Visibility = Visibility.Hidden;
-                await Task.Run(() => updater.LaunchTaystJK());
+                await Task.Run(updater.LaunchTaystJK);
                 await UpdatingIcon.MorphIntoCircle();
                 Close();
                 return;
@@ -155,7 +155,7 @@ namespace Updater
             StatusLabel.Content = "Update complete. Launching...";
             await UpdatingIcon.MorphIntoCircle();
             // TODO: success icon
-            await Task.Run(() => updater.LaunchTaystJK());
+            await Task.Run(updater.LaunchTaystJK);
             Close();
         }
 
@@ -190,12 +190,14 @@ namespace Updater
         {
             LogsButton.IsEnabled = false;
 
-            new Process() {
-                StartInfo = new ProcessStartInfo(logger.LogFilePath)
+            using (Process textEditorProcess = new Process())
+            {
+                textEditorProcess.StartInfo = new ProcessStartInfo(logger.LogFilePath)
                 {
                     UseShellExecute = true
-                }
-            }.Start();
+                };
+                textEditorProcess.Start();
+            }
 
             await Task.Delay(2000);
             LogsButton.IsEnabled = true;
@@ -212,7 +214,7 @@ namespace Updater
             ExitButton.IsEnabled = false;
             LaunchButton.IsEnabled = false;
             StatusLabel.Content = "Launching...";
-            await Task.Run(() => updater.LaunchTaystJK());
+            await Task.Run(updater.LaunchTaystJK);
             await ErrorIcon.AnimateOut();
             Close();
         }
@@ -223,7 +225,7 @@ namespace Updater
             SkipButton.IsEnabled = false;
             StatusLabel.Content = "Skipped. Launching...";
             cancellationTokenSource.Cancel();
-            await Task.Run(() => updater.LaunchTaystJK());
+            await Task.Run(updater.LaunchTaystJK);
             await UpdatingIcon.MorphIntoCircle();
             Close();
         }

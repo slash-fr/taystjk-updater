@@ -157,7 +157,7 @@ namespace Updater
 
         public void LaunchTaystJK()
         {
-            Process.Start(pathToTaystJkExe, commandLineArgsAsString);
+            using (Process.Start(pathToTaystJkExe, commandLineArgsAsString)) { }
         }
         
         ////////////////////////////////////////////////////////////////////////
