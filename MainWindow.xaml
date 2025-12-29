@@ -7,11 +7,9 @@
         mc:Ignorable="d"
         WindowStyle="None"
         ResizeMode="NoResize"
-        Title="Launch TaystJK"
+        Title="TaystJK Updater"
         Width="640"
         Height="360"
-        ShowInTaskbar="False"
-        Topmost="True"
         WindowStartupLocation="CenterScreen"
         Loaded="Window_Loaded">
     <Grid xmlns:src="clr-namespace:Updater">
