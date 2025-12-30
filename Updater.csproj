@@ -67,7 +67,7 @@
     </Compile>
     <Compile Include="Logger.cs" />
     <Compile Include="UpdateCheckResult.cs" />
-    <Compile Include="UpdaterLogic.cs" />
+    <Compile Include="TaystJkUpdater.cs" />
     <Compile Include="UpdatingIcon.xaml.cs">
       <DependentUpon>UpdatingIcon.xaml</DependentUpon>
     </Compile>

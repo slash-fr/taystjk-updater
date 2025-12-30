@@ -10,7 +10,7 @@ namespace Updater
     public partial class MainWindow : Window
     {
         private Logger logger;
-        private UpdaterLogic updater;
+        private TaystJkUpdater taystJkUpdater;
         private readonly CancellationTokenSource cancellationTokenSource;
 
         public MainWindow()
@@ -59,9 +59,9 @@ namespace Updater
 
         private async Task PerformUpdate(Logger logger)
         { 
-            updater = new UpdaterLogic(logger);
+            taystJkUpdater = new TaystJkUpdater(logger);
 
-            if (!updater.InitializeUpdater())
+            if (!taystJkUpdater.InitializeUpdater())
             {
                 DisplayError("TaystJK executable was not found!", true);
                 return;
@@ -70,7 +70,7 @@ namespace Updater
             StatusLabel.Content = "Checking for TaystJK updates...";
             SkipButton.Visibility = Visibility.Visible;
 
-            UpdateCheckResult updateCheckResult = await Task.Run(updater.CheckTaystJkUpdate);
+            UpdateCheckResult updateCheckResult = await Task.Run(taystJkUpdater.CheckForUpdates);
 
             if (cancellationTokenSource.IsCancellationRequested)
             {
@@ -87,7 +87,7 @@ namespace Updater
             {
                 StatusLabel.Content = "Already up-to-date. Launching...";
                 SkipButton.Visibility = Visibility.Hidden;
-                await Task.Run(updater.LaunchTaystJK);
+                await Task.Run(taystJkUpdater.LaunchTaystJK);
                 await UpdatingIcon.MorphIntoCircle();
                 Close();
                 return;
@@ -97,7 +97,7 @@ namespace Updater
             {
                 StatusLabel.Content = "Already checked in the past hour. Launching...";
                 SkipButton.Visibility = Visibility.Hidden;
-                await Task.Run(updater.LaunchTaystJK);
+                await Task.Run(taystJkUpdater.LaunchTaystJK);
                 await UpdatingIcon.MorphIntoCircle();
                 Close();
                 return;
@@ -109,7 +109,7 @@ namespace Updater
             progress.ProgressChanged += (progressSender, progressPercentage) => {
                 StatusLabel.Content = "Downloading TaystJK update... (" + progressPercentage + "%)";
             };
-            if (!await updater.DownloadTaystJkUpdate(cancellationTokenSource.Token, progress))
+            if (!await taystJkUpdater.DownloadLatestRelease(cancellationTokenSource.Token, progress))
             {
                 DisplayError("Failed to download the new TaystJK version!");
                 return;
@@ -121,7 +121,7 @@ namespace Updater
             }
 
             StatusLabel.Content = "Unpacking TaystJK update...";
-            if (!await updater.UnpackTaystJkUpdate())
+            if (!await taystJkUpdater.UnpackLatestRelease())
             {
                 DisplayError("Failed to unpack the new TaystJK version!");
                 return;
@@ -133,7 +133,7 @@ namespace Updater
             }
 
             StatusLabel.Content = "Backing up current TaystJK files...";
-            if (!await updater.BackupTaystJkFiles())
+            if (!await taystJkUpdater.BackupCurrentFiles())
             {
                 DisplayError("Failed to backup the current TaystJK version!");
                 return;
@@ -146,7 +146,7 @@ namespace Updater
 
             StatusLabel.Content = "Applying TaystJK update...";
             SkipButton.Visibility = Visibility.Hidden; // Skipping would leave a partially updated version...
-            if (!await updater.CopyTaystJkFiles())
+            if (!await taystJkUpdater.CopyNewFiles())
             {
                 DisplayError("Failed to install the new TaystJK version!");
                 return;
@@ -155,7 +155,7 @@ namespace Updater
             StatusLabel.Content = "Update complete. Launching...";
             await UpdatingIcon.MorphIntoCircle();
             // TODO: success icon
-            await Task.Run(updater.LaunchTaystJK);
+            await Task.Run(taystJkUpdater.LaunchTaystJK);
             Close();
         }
 
@@ -214,7 +214,7 @@ namespace Updater
             ExitButton.IsEnabled = false;
             LaunchButton.IsEnabled = false;
             StatusLabel.Content = "Launching...";
-            await Task.Run(updater.LaunchTaystJK);
+            await Task.Run(taystJkUpdater.LaunchTaystJK);
             await ErrorIcon.AnimateOut();
             Close();
         }
@@ -225,7 +225,7 @@ namespace Updater
             SkipButton.IsEnabled = false;
             StatusLabel.Content = "Skipped. Launching...";
             cancellationTokenSource.Cancel();
-            await Task.Run(updater.LaunchTaystJK);
+            await Task.Run(taystJkUpdater.LaunchTaystJK);
             await UpdatingIcon.MorphIntoCircle();
             Close();
         }

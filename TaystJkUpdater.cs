@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Updater
 {
-    internal class UpdaterLogic
+    internal class TaystJkUpdater
     {
         private readonly HashSet<string> allowedTaystJkFilenames = new HashSet<string>()
         {
@@ -21,11 +21,15 @@ namespace Updater
         private string commandLineArgsAsString = "";
         private string pathToTaystJkExe = "";
 
-        public UpdaterLogic(Logger logger)
+        public TaystJkUpdater(Logger logger)
         {
             this.logger = logger;
         }
 
+        /// <summary>
+        /// Parses command-line arguments and locates TaystJK executable
+        /// </summary>
+        /// <returns>true on success, false if TaystJK exe was not found</returns>
         public bool InitializeUpdater()
         {
             return ParseCommandLineArgs() && FindTaystJkExe();
@@ -34,11 +38,11 @@ namespace Updater
         /// <summary>
         /// Check whether an update is available for TaystJK
         /// </summary>
-        public async Task<UpdateCheckResult> CheckTaystJkUpdate()
+        public async Task<UpdateCheckResult> CheckForUpdates()
         {
             if (String.IsNullOrEmpty(pathToTaystJkExe))
             {
-                throw new InvalidOperationException("CheckTaystJkUpdate() must be called AFTER InitializeUpdater()");
+                throw new InvalidOperationException("CheckForUpdates() must be called AFTER InitializeUpdater()");
             }
 
             // TODO: actually check for updates
@@ -67,7 +71,7 @@ namespace Updater
         /// </summary>
         /// <param name="progress">Progress report, from 0 to 100 (percent)</param>
         /// <returns>true if the update was downloaded successfully, false otherwise</returns>
-        public async Task<bool> DownloadTaystJkUpdate(CancellationToken cancellationToken, IProgress<int> progress)
+        public async Task<bool> DownloadLatestRelease(CancellationToken cancellationToken, IProgress<int> progress)
         {
             // TODO: actually attempt to download the update
             await Task.Delay(100);
@@ -98,7 +102,7 @@ namespace Updater
         /// Unzip the new version
         /// </summary>
         /// <returns>true if the new version was unpacked successfully, false otherwise</returns>
-        public async Task<bool> UnpackTaystJkUpdate()
+        public async Task<bool> UnpackLatestRelease()
         {
             // TODO: actually attempt to unzip the new version
             await Task.Delay(1000);
@@ -118,7 +122,7 @@ namespace Updater
         /// Backup files that would get overwritten by the update
         /// </summary>
         /// <returns>true if the files were backed up successfully, false otherwise</returns>
-        public async Task<bool> BackupTaystJkFiles()
+        public async Task<bool> BackupCurrentFiles()
         {
             // TODO: actually attempt to backup files that would get overwritten by the update
             await Task.Delay(1000);
@@ -138,7 +142,7 @@ namespace Updater
         /// Copy files from the new version to the game's folder
         /// </summary>
         /// <returns>true if the files were copied successfully, false otherwise</returns>
-        public async Task<bool> CopyTaystJkFiles()
+        public async Task<bool> CopyNewFiles()
         {
             // TODO: actually attempt to copy files from the new version
             await Task.Delay(1000);
