@@ -10,6 +10,7 @@ namespace Updater
     public partial class MainWindow : Window
     {
         private Logger logger;
+        private UpdateLock updateLock;
         private TaystJkUpdater taystJkUpdater;
         private readonly CancellationTokenSource cancellationTokenSource;
 
@@ -25,6 +26,7 @@ namespace Updater
             {
                 logger = new Logger();
                 await PerformUpdate(logger);
+                updateLock?.Dispose();
             }
             catch (UnloggableErrorException exception)
             {
@@ -58,7 +60,7 @@ namespace Updater
         }
 
         private async Task PerformUpdate(Logger logger)
-        { 
+        {
             taystJkUpdater = new TaystJkUpdater(logger);
 
             if (!taystJkUpdater.InitializeUpdater())
@@ -66,6 +68,39 @@ namespace Updater
                 DisplayError("TaystJK executable was not found!", true);
                 return;
             }
+
+            try
+            {
+                int totalLockDelayInSeconds = 0;
+                updateLock = UpdateLock.Acquire();
+                while (updateLock is null)
+                {
+                    if (totalLockDelayInSeconds == 0)
+                    {
+                        StatusLabel.Content = "Waiting for an update to finish...";
+                        logger.Warning("Could not acquire the update lock. Waiting until the lock is released.");
+                    }
+                    else if (totalLockDelayInSeconds == 5)
+                    {
+                        // After 5 seconds, show the "Exit" button (+ "Open log file" button), but keep trying
+                        LaunchButton.Visibility = Visibility.Collapsed;
+                        ButtonRow.Visibility = Visibility.Visible;
+                        ((Storyboard)ButtonRow.Resources["AnimateIn"]).Begin(this);
+                    }
+
+                    await Task.Delay(1000);
+                    totalLockDelayInSeconds++;
+                    updateLock = UpdateLock.Acquire();
+                }
+            }
+            catch (ProgramDataNotWritableException exception)
+            {
+                logger.Error(exception.Message, exception.InnerException);
+                DisplayError("Could not write to the ProgramData folder!");
+                return;
+            }
+
+            ButtonRow.Visibility = Visibility.Hidden;
 
             StatusLabel.Content = "Checking for TaystJK updates...";
             SkipButton.Visibility = Visibility.Visible;
@@ -172,12 +207,12 @@ namespace Updater
                 // Don't display the error if the user has clicked the "Skip" button (the updater will close soon)
                 return;
             }
+
+            updateLock?.Dispose(); // Release the lock now (no need to wait until the updater closes)
+
             StatusLabel.Content = errorMessage;
             SkipButton.Visibility = Visibility.Hidden;
-            if (preventsGameLaunch)
-            {
-                LaunchButton.Visibility = Visibility.Collapsed;
-            }
+            LaunchButton.Visibility = preventsGameLaunch ? Visibility.Collapsed : Visibility.Visible;
             ButtonRow.Visibility = Visibility.Visible;
             ((Storyboard)ButtonRow.Resources["AnimateIn"]).Begin(this);
             await UpdatingIcon.MorphIntoCircle();

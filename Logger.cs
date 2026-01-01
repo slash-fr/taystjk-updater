@@ -13,6 +13,8 @@ namespace Updater
 
         public Logger()
         {
+            // Log to %LOCALAPPDATA% to protect user privacy,
+            // i.e. avoid making all TaystJK launch times available to all users (on a multi-user system).
             logFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
                 + Path.DirectorySeparatorChar + "TaystJK Updater";
             LogFilePath = logFolderPath + Path.DirectorySeparatorChar + "Updater.log";
@@ -57,6 +59,11 @@ namespace Updater
                 // This time, fail loudly (or the error will vanish into the void)
                 throw new UnloggableErrorException(message, exception);
             }
+        }
+
+        public void Error(string message, Exception exception)
+        {
+            Error(message + "\n" + exception.ToString());
         }
 
         private void WriteLogMessage(string level, string message)

@@ -61,6 +61,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ProgramDataNotWritableException.cs" />
     <Compile Include="UnloggableErrorException.cs" />
     <Compile Include="ErrorIcon.xaml.cs">
       <DependentUpon>ErrorIcon.xaml</DependentUpon>
@@ -68,6 +69,7 @@
     <Compile Include="Logger.cs" />
     <Compile Include="UpdateCheckResult.cs" />
     <Compile Include="TaystJkUpdater.cs" />
+    <Compile Include="UpdateLock.cs" />
     <Compile Include="UpdatingIcon.xaml.cs">
       <DependentUpon>UpdatingIcon.xaml</DependentUpon>
     </Compile>

@@ -9,12 +9,16 @@ using System.Threading.Tasks;
 
 namespace Updater
 {
+    /// <summary>
+    /// TaystJK updater logic (does not handle the UI)
+    /// </summary>
     internal class TaystJkUpdater
     {
         private readonly HashSet<string> allowedTaystJkFilenames = new HashSet<string>()
         {
             "taystjk.x86_64.exe",
             "taystjk.x86.exe",
+            "taystjk.arm64.exe", // Just in case...
         };
 
         private readonly Logger logger;
@@ -42,7 +46,9 @@ namespace Updater
         {
             if (String.IsNullOrEmpty(pathToTaystJkExe))
             {
-                throw new InvalidOperationException("CheckForUpdates() must be called AFTER InitializeUpdater()");
+                throw new InvalidOperationException(
+                    "CheckForUpdates() was called too soon (missing: pathToTaystJkExe)"
+                );
             }
 
             // TODO: actually check for updates
@@ -215,6 +221,7 @@ namespace Updater
             // Validate the "path to TaystJK" argument (if any)
             if (!String.IsNullOrEmpty(pathToTaystJkExe))
             {
+                pathToTaystJkExe = Path.GetFullPath(pathToTaystJkExe);
                 if (File.Exists(pathToTaystJkExe))
                 {
                     return true;
@@ -308,9 +315,8 @@ namespace Updater
             catch (Exception exception)
             {
                 logger.Error(
-                    "An error occurred when trying to detect the version from "
-                    + '"' + pathToTaystJkExe + '"' + ".\n"
-                    + exception.ToString()
+                    "An error occurred when trying to detect the version from " + '"' + pathToTaystJkExe + '"' + ".",
+                    exception
                 );
                 // Other than that, fail silently. (This whole method is a dirty hack, anyway...)
                 return null;
