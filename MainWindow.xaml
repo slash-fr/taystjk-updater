@@ -32,6 +32,11 @@
                        VerticalAlignment="Bottom"
                        Visibility="Hidden"/>
 
+        <src:SuccessIcon x:Name="SuccessIcon"
+               Grid.Row="0"
+               VerticalAlignment="Bottom"
+               Visibility="Hidden"/>
+
         <Label x:Name="StatusLabel"
                Content="Initializing..."
                Grid.Row="1"

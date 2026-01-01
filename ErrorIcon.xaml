@@ -43,7 +43,7 @@
                         Storyboard.TargetName="BarMask"
                         Storyboard.TargetProperty="Rect">
                         <RectAnimation.EasingFunction>
-                            <CubicEase EasingMode="EaseIn" />
+                            <CubicEase EasingMode="EaseOut" />
                         </RectAnimation.EasingFunction>
                     </RectAnimation>
                 </Storyboard>
@@ -89,7 +89,7 @@
                         <EasingDoubleKeyFrame Value="1" KeyTime="00:00:00.25"/>
                         <EasingDoubleKeyFrame Value="0" KeyTime="00:00:00.50">
                             <EasingDoubleKeyFrame.EasingFunction>
-                                <CubicEase EasingMode="EaseIn" />
+                                <CubicEase EasingMode="EaseOut" />
                             </EasingDoubleKeyFrame.EasingFunction>
                         </EasingDoubleKeyFrame>
                     </DoubleAnimationUsingKeyFrames>
@@ -99,7 +99,7 @@
                         <EasingDoubleKeyFrame Value="1" KeyTime="00:00:00.25"/>
                         <EasingDoubleKeyFrame Value="0" KeyTime="00:00:00.50">
                             <EasingDoubleKeyFrame.EasingFunction>
-                                <CubicEase EasingMode="EaseIn" />
+                                <CubicEase EasingMode="EaseOut" />
                             </EasingDoubleKeyFrame.EasingFunction>
                         </EasingDoubleKeyFrame>
                     </DoubleAnimationUsingKeyFrames>

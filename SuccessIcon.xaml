@@ -1,0 +1,88 @@
+﻿<UserControl x:Class="Updater.SuccessIcon"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Updater"
+             mc:Ignorable="d" 
+             d:DesignHeight="128" d:DesignWidth="128">
+    <Grid>
+        <Ellipse Width="110"
+                 Height="110"
+                 Canvas.Top="64"
+                 Canvas.Left="64"
+                 StrokeThickness="8"
+                 Stroke="{StaticResource PathFillColor}"/>
+
+        <Path x:Name="FullSymbol"
+              Visibility="Hidden"
+              Data="M 38,62 32,68 56,92 96,52 90,46 56,80 z"
+              Width="128"
+              Height="128"
+              Fill="{StaticResource PathFillColor}">
+            <Path.Clip>
+                <PathGeometry>
+                    <PathFigure x:Name="LeftBarMask" IsClosed="True" StartPoint="38,62">
+                        <LineSegment Point="32,68"/>
+                        <LineSegment Point="56,92" x:Name="LeftBarBottomPoint"/>
+                        <LineSegment Point="62,86" x:Name="LeftBarRightPoint"/>
+                    </PathFigure>
+                    <PathFigure x:Name="RightBarMask" IsClosed="True" StartPoint="56,80">
+                        <LineSegment Point="62,86"/>
+                        <LineSegment Point="96,52" x:Name="RightBarRightPoint"/>
+                        <LineSegment Point="90,46" x:Name="RightBarTopPoint"/>
+                    </PathFigure>
+                </PathGeometry>
+            </Path.Clip>
+            <Path.Resources>
+                <Storyboard x:Key="AnimateIn">
+                    <PointAnimation
+                        From="32,68"
+                        To="56,92"
+                        Duration="00:00:00.5"
+                        Storyboard.TargetName="LeftBarBottomPoint"
+                        Storyboard.TargetProperty="Point">
+                        <PointAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseIn"/>
+                        </PointAnimation.EasingFunction>
+                    </PointAnimation>
+
+                    <PointAnimation
+                        From="38,62"
+                        To="62,86"
+                        Duration="00:00:00.5"
+                        Storyboard.TargetName="LeftBarRightPoint"
+                        Storyboard.TargetProperty="Point">
+                        <PointAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseIn"/>
+                        </PointAnimation.EasingFunction>
+                    </PointAnimation>
+
+                    <PointAnimationUsingKeyFrames
+                        Storyboard.TargetName="RightBarRightPoint"
+                        Storyboard.TargetProperty="Point">
+                        <EasingPointKeyFrame KeyTime="00:00:00" Value="62,86"/>
+                        <EasingPointKeyFrame KeyTime="00:00:00.5" Value="62,86"/>
+                        <EasingPointKeyFrame KeyTime="00:00:01" Value="96,52">
+                            <EasingPointKeyFrame.EasingFunction>
+                                <CubicEase EasingMode="EaseIn"/>
+                            </EasingPointKeyFrame.EasingFunction>
+                        </EasingPointKeyFrame>
+                    </PointAnimationUsingKeyFrames>
+
+                    <PointAnimationUsingKeyFrames
+                        Storyboard.TargetName="RightBarTopPoint"
+                        Storyboard.TargetProperty="Point">
+                        <EasingPointKeyFrame KeyTime="00:00:00" Value="56,80"/>
+                        <EasingPointKeyFrame KeyTime="00:00:00.5" Value="56,80"/>
+                        <EasingPointKeyFrame KeyTime="00:00:01" Value="90,46">
+                            <EasingPointKeyFrame.EasingFunction>
+                                <CubicEase EasingMode="EaseIn"/>
+                            </EasingPointKeyFrame.EasingFunction>
+                        </EasingPointKeyFrame>
+                    </PointAnimationUsingKeyFrames>
+                </Storyboard>
+            </Path.Resources>
+        </Path>
+    </Grid>
+</UserControl>

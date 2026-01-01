@@ -120,21 +120,15 @@ namespace Updater
 
             if (updateCheckResult == UpdateCheckResult.AlreadyUpToDate)
             {
-                StatusLabel.Content = "Already up-to-date. Launching...";
                 SkipButton.Visibility = Visibility.Hidden;
-                await Task.Run(taystJkUpdater.LaunchTaystJK);
-                await UpdatingIcon.MorphIntoCircle();
-                Close();
+                await LaunchTaystJkWithSuccessMessage("Already up-to-date. Launching...");
                 return;
             }
 
             if (updateCheckResult == UpdateCheckResult.AlreadyCheckedRecently)
             {
-                StatusLabel.Content = "Already checked in the past hour. Launching...";
                 SkipButton.Visibility = Visibility.Hidden;
-                await Task.Run(taystJkUpdater.LaunchTaystJK);
-                await UpdatingIcon.MorphIntoCircle();
-                Close();
+                await LaunchTaystJkWithSuccessMessage("Already checked in the past hour. Launching...");
                 return;
             }
 
@@ -187,11 +181,7 @@ namespace Updater
                 return;
             }
 
-            StatusLabel.Content = "Update complete. Launching...";
-            await UpdatingIcon.MorphIntoCircle();
-            // TODO: success icon
-            await Task.Run(taystJkUpdater.LaunchTaystJK);
-            Close();
+            await LaunchTaystJkWithSuccessMessage("Update complete. Launching...");
         }
 
         /// <summary>
@@ -219,6 +209,27 @@ namespace Updater
             UpdatingIcon.Visibility = Visibility.Hidden;
             ErrorIcon.Visibility = Visibility.Visible;
             await ErrorIcon.AnimateIn();
+        }
+
+        /// <summary>
+        /// Displays the specified message, displays the "success" icon, launches TaystJK, and closes the updater.
+        /// </summary>
+        /// <param name="successMessage">Status message to display</param>
+        private async Task LaunchTaystJkWithSuccessMessage(string successMessage)
+        {
+            StatusLabel.Content = successMessage;
+
+            await UpdatingIcon.MorphIntoCircle();
+            SuccessIcon.Visibility = Visibility.Visible;
+            UpdatingIcon.Visibility = Visibility.Hidden;
+
+            _ = Task.Run(taystJkUpdater.LaunchTaystJK);
+            Topmost = true;
+
+            await SuccessIcon.AnimateIn();
+            await Task.Delay(2000);
+
+            Close();
         }
 
         private async void LogsButton_Click(object sender, RoutedEventArgs e)
@@ -251,6 +262,8 @@ namespace Updater
             StatusLabel.Content = "Launching...";
             await Task.Run(taystJkUpdater.LaunchTaystJK);
             await ErrorIcon.AnimateOut();
+            Topmost = true;
+            await Task.Delay(1000);
             Close();
         }
 
@@ -258,11 +271,8 @@ namespace Updater
         {
             logger.Info("Skipping...");
             SkipButton.IsEnabled = false;
-            StatusLabel.Content = "Skipped. Launching...";
             cancellationTokenSource.Cancel();
-            await Task.Run(taystJkUpdater.LaunchTaystJK);
-            await UpdatingIcon.MorphIntoCircle();
-            Close();
+            await LaunchTaystJkWithSuccessMessage("Skipped. Launching...");
         }
     }
 }
