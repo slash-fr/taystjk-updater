@@ -1,13 +1,13 @@
 ﻿using System;
 
-namespace Updater
+namespace TaystJkUpdater.GitHub
 {
-    internal class GithubApiReleaseData
+    internal class ReleaseData
     {
         public DateTime CreatedAt { get; }
         public string TargetCommitish { get; }
 
-        public GithubApiReleaseData(DateTime createdAt, string targetCommitish)
+        public ReleaseData(DateTime createdAt, string targetCommitish)
         {
             this.CreatedAt = createdAt;
             this.TargetCommitish = targetCommitish;

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Updater
+namespace TaystJkUpdater.Updater
 {
     internal class ProgramDataNotWritableException : Exception
     {

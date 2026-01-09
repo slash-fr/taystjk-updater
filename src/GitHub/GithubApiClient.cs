@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Updater
+namespace TaystJkUpdater.GitHub
 {
     internal class GithubApiClient
     {
@@ -18,7 +18,7 @@ namespace Updater
             httpClient.DefaultRequestHeaders.Add("User-Agent", "TaystJK Updater");
         }
 
-        public async Task<GithubApiReleaseData> GetLatestTaystJkRelease()
+        public async Task<ReleaseData> GetLatestTaystJkRelease()
         {
             Uri requestUri = new Uri("http://localhost/latest.php");
             // TODO: "https://api.github.com/repos/taysta/TaystJK/releases/tags/latest"
@@ -38,7 +38,7 @@ namespace Updater
             {
                 if ((int)response.StatusCode == 429) // Too Many Requests
                 {
-                    throw new GithubTooManyRequestsException(requestUri);
+                    throw new TooManyRequestsException(requestUri);
                 }
 
                 throw new GithubApiException(
@@ -75,7 +75,7 @@ namespace Updater
                 );
             }
 
-            return new GithubApiReleaseData(parsedResponse["created_at"], parsedResponse["target_commitish"]);
+            return new ReleaseData(parsedResponse["created_at"], parsedResponse["target_commitish"]);
         }
     }
 }

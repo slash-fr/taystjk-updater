@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Updater
+namespace TaystJkUpdater.GitHub
 {
     internal class GithubApiException : Exception
     {

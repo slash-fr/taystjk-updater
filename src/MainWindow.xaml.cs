@@ -4,14 +4,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Animation;
+using TaystJkUpdater.GitHub;
+using TaystJkUpdater.Logging;
+using TaystJkUpdater.Updater;
 
-namespace Updater
+namespace TaystJkUpdater
 {
     public partial class MainWindow : Window
     {
         private Logger logger;
         private UpdateLock updateLock;
-        private TaystJkUpdater taystJkUpdater;
+        private TaystJkUpdaterLogic taystJkUpdater;
         private readonly CancellationTokenSource cancellationTokenSource;
 
         public MainWindow()
@@ -62,7 +65,7 @@ namespace Updater
         private async Task PerformUpdate(Logger logger)
         {
             GithubApiClient githubApiClient = new GithubApiClient();
-            taystJkUpdater = new TaystJkUpdater(logger);
+            taystJkUpdater = new TaystJkUpdaterLogic(logger);
 
             if (!taystJkUpdater.InitializeUpdater())
             {

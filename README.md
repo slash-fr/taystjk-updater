@@ -24,14 +24,14 @@ https://github.com/taysta/TaystJK
 
 ## Installation
 
-1. Drop `Updater.exe` into the same folder as `taystjk.x86_64.exe`
+1. Drop `TaystJK Updater.exe` into the same folder as `taystjk.x86_64.exe`
    or `taystjk.x86.exe`.
 2. Make sure the folder is **not** admin-protected.  
    - Running the updater as admin is ⚠️ **highly discouraged** ⚠️,
      as it would then launch TaystJK with admin rights.
-3. You can then pin `Updater.exe` to your start menu,
+3. You can then pin `TaystJK Updater.exe` to your start menu,
    or send it to your desktop as a shortcut.  
-   - You can rename the shortcut to `TaystJK`, if you want.  
+   - You can rename the shortcut to just `TaystJK`, if you want.  
    - You could even edit the shortcut icon, and select `taystjk.x86_64.exe`
      (or `taystjk.x86.exe`) as the source for the icon.  
 

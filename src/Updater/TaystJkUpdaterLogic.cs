@@ -6,13 +6,15 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using TaystJkUpdater.GitHub;
+using TaystJkUpdater.Logging;
 
-namespace Updater
+namespace TaystJkUpdater.Updater
 {
     /// <summary>
     /// TaystJK updater logic (does not handle the UI)
     /// </summary>
-    internal class TaystJkUpdater
+    internal class TaystJkUpdaterLogic
     {
         private readonly HashSet<string> allowedTaystJkFilenames = new HashSet<string>()
         {
@@ -25,7 +27,7 @@ namespace Updater
         private string commandLineArgsAsString = "";
         private string pathToTaystJkExe = "";
 
-        public TaystJkUpdater(Logger logger)
+        public TaystJkUpdaterLogic(Logger logger)
         {
             this.logger = logger;
         }
@@ -56,13 +58,13 @@ namespace Updater
             //logger.Info("Already checked less than an hour ago for " + '"' + pathToTaystJkExe + '"' + '.');
             //return UpdateCheckResult.AlreadyCheckedRecently;
 
-            GithubApiReleaseData latestRelease;
+            ReleaseData latestRelease;
 
             try
             {
                 latestRelease = await githubApiClient.GetLatestTaystJkRelease();
             }
-            catch (GithubTooManyRequestsException exception)
+            catch (TooManyRequestsException exception)
             {
                 // TODO: Do not retry for one hour
                 // TODO: Add something like "github_throttled_until" to "state.json" ?

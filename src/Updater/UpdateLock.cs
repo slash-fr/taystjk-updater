@@ -2,7 +2,7 @@
 using System.IO;
 using System.Security;
 
-namespace Updater
+namespace TaystJkUpdater.Updater
 {
     /// <summary>
     /// File-based lock preventing other instances of the updater from modifying the same files at the same time.

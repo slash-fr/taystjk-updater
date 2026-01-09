@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Updater
+namespace TaystJkUpdater.Logging
 {
     internal class UnloggableErrorException : Exception
     {

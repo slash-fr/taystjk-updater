@@ -2,7 +2,7 @@
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
 
-namespace Updater
+namespace TaystJkUpdater
 {
     public partial class ErrorIcon : UserControl
     {

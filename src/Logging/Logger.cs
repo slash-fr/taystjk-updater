@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 
-namespace Updater
+namespace TaystJkUpdater.Logging
 {
     internal class Logger
     {
