@@ -42,7 +42,8 @@ namespace Updater
         /// <summary>
         /// Check whether an update is available for TaystJK
         /// </summary>
-        public async Task<UpdateCheckResult> CheckForUpdates()
+        /// <param name="githubApiClient">GitHub API Client (dependency to inject)</param>
+        public async Task<UpdateCheckResult> CheckForUpdates(GithubApiClient githubApiClient)
         {
             if (String.IsNullOrEmpty(pathToTaystJkExe))
             {
@@ -51,25 +52,80 @@ namespace Updater
                 );
             }
 
-            // TODO: actually check for updates
-            await Task.Delay(1000);
+            // TODO: Don't check more than once per hour
+            //logger.Info("Already checked less than an hour ago for " + '"' + pathToTaystJkExe + '"' + '.');
+            //return UpdateCheckResult.AlreadyCheckedRecently;
 
-            switch (3)
+            GithubApiReleaseData latestRelease;
+
+            try
             {
-                case 0:
-                    logger.Error("An error occurred while checking for TaystJK updates."); // TODO: Be more specific
-                    return UpdateCheckResult.Error;
-                case 1:
-                    logger.Info('"' + pathToTaystJkExe + '"' + " was already up to date.");
-                    return UpdateCheckResult.AlreadyUpToDate;
-                case 2:
-                    logger.Info("Already checked less than an hour ago for " + '"' + pathToTaystJkExe + '"' + '.');
-                    return UpdateCheckResult.AlreadyCheckedRecently;
-                default:
-                    // TODO: Be more specific
-                    logger.Info("New version found for " + '"' + pathToTaystJkExe + '"' + '.');
-                    return UpdateCheckResult.NeedsUpdate;
+                latestRelease = await githubApiClient.GetLatestTaystJkRelease();
             }
+            catch (GithubTooManyRequestsException exception)
+            {
+                // TODO: Do not retry for one hour
+                // TODO: Add something like "github_throttled_until" to "state.json" ?
+                logger.Error(exception.Message);
+                return UpdateCheckResult.Error;
+            }
+            catch (GithubApiException exception)
+            {
+                if (exception.InnerException != null)
+                {
+                    logger.Error(exception.Message, exception.InnerException);
+                }
+                else
+                {
+                    logger.Error(exception.Message);
+                }
+
+                return UpdateCheckResult.Error;
+            }
+
+            // Try to use the commit hash
+            Match match = Regex.Match(latestRelease.TargetCommitish, "^[0-9A-Fa-f]{4,40}$");
+            if (match.Success)
+            {
+                string currentCommitHash = GetCurrentTaystJkCommitHash();
+                if (!String.IsNullOrEmpty(currentCommitHash))
+                {
+                    if (match.Value.ToLower().StartsWith(currentCommitHash.ToLower()))
+                    {
+                        logger.Info("TaystJK is already up to date, according to the commit hash.");
+                        logger.Info("Current commit: " + currentCommitHash);
+                        logger.Info("Latest release: " + match.Value);
+
+                        return UpdateCheckResult.AlreadyUpToDate;
+                    }
+
+                    logger.Info("New TaystJK version found, based on the commit hash.");
+                    logger.Info("Current commit: " + currentCommitHash);
+                    logger.Info("Latest release: " + match.Value);
+
+                    return UpdateCheckResult.NeedsUpdate;
+                }
+            }
+
+            // Otherwise, use the date
+            // TODO: Which one ? Compare LastWriteTime to published_at ? Or CreationTime to create_at ?
+            DateTime localCreationTime = new FileInfo(pathToTaystJkExe).CreationTime; // TODO: Use CreationTimeUtc ?
+
+            if (localCreationTime < latestRelease.CreatedAt)
+            {
+                logger.Info("New TaystJK version found, based on the file timestamps.");
+                logger.Info("Local exe file created at: " + localCreationTime.ToString("yyyy-MM-dd HH:mm:ss"));
+                logger.Info("Latest release created at: " + latestRelease.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                return UpdateCheckResult.NeedsUpdate;
+            }
+
+
+            logger.Info("TaystJK is already up to date, according to the file timestamps.");
+            logger.Info("Local exe file created at: " + localCreationTime.ToString("yyyy-MM-dd HH:mm:ss"));
+            logger.Info("Latest release created at: " + latestRelease.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
+
+            return UpdateCheckResult.AlreadyUpToDate;
         }
 
         /// <summary>
@@ -224,6 +280,7 @@ namespace Updater
                 pathToTaystJkExe = Path.GetFullPath(pathToTaystJkExe);
                 if (File.Exists(pathToTaystJkExe))
                 {
+                    logger.Info("Found the specified TaystJK executable: " + '"' + pathToTaystJkExe + '"');
                     return true;
                 }
 
@@ -239,6 +296,7 @@ namespace Updater
                 if (File.Exists(fullPath))
                 {
                     pathToTaystJkExe = fullPath;
+                    logger.Info("Found TaystJK executable in the current folder: " + '"' + pathToTaystJkExe + '"');
                     return true;
                 }
             }

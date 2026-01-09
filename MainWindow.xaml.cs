@@ -61,6 +61,7 @@ namespace Updater
 
         private async Task PerformUpdate(Logger logger)
         {
+            GithubApiClient githubApiClient = new GithubApiClient();
             taystJkUpdater = new TaystJkUpdater(logger);
 
             if (!taystJkUpdater.InitializeUpdater())
@@ -105,7 +106,9 @@ namespace Updater
             StatusLabel.Content = "Checking for TaystJK updates...";
             SkipButton.Visibility = Visibility.Visible;
 
-            UpdateCheckResult updateCheckResult = await Task.Run(taystJkUpdater.CheckForUpdates);
+            UpdateCheckResult updateCheckResult = await Task.Run(
+                () => taystJkUpdater.CheckForUpdates(githubApiClient)
+            );
 
             if (cancellationTokenSource.IsCancellationRequested)
             {
