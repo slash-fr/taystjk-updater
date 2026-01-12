@@ -111,16 +111,16 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="vendor\LightJson\JsonArray.cs" />
-    <Compile Include="vendor\LightJson\JsonObject.cs" />
-    <Compile Include="vendor\LightJson\JsonValue.cs" />
-    <Compile Include="vendor\LightJson\JsonValueType.cs" />
-    <Compile Include="vendor\LightJson\Serialization\JsonParseException.cs" />
-    <Compile Include="vendor\LightJson\Serialization\JsonReader.cs" />
-    <Compile Include="vendor\LightJson\Serialization\JsonSerializationException.cs" />
-    <Compile Include="vendor\LightJson\Serialization\JsonWriter.cs" />
-    <Compile Include="vendor\LightJson\Serialization\TextPosition.cs" />
-    <Compile Include="vendor\LightJson\Serialization\TextScanner.cs" />
+    <Compile Include="lib\LightJson\JsonArray.cs" />
+    <Compile Include="lib\LightJson\JsonObject.cs" />
+    <Compile Include="lib\LightJson\JsonValue.cs" />
+    <Compile Include="lib\LightJson\JsonValueType.cs" />
+    <Compile Include="lib\LightJson\Serialization\JsonParseException.cs" />
+    <Compile Include="lib\LightJson\Serialization\JsonReader.cs" />
+    <Compile Include="lib\LightJson\Serialization\JsonSerializationException.cs" />
+    <Compile Include="lib\LightJson\Serialization\JsonWriter.cs" />
+    <Compile Include="lib\LightJson\Serialization\TextPosition.cs" />
+    <Compile Include="lib\LightJson\Serialization\TextScanner.cs" />
     <Compile Include="src\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -150,7 +150,7 @@
     </EmbeddedResource>
     <None Include="README.md" />
     <None Include="src\app.manifest" />
-    <None Include="vendor\LightJson\README.md" />
+    <None Include="lib\LightJson\README.md" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -178,7 +178,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="vendor\LightJson\LICENSE.txt" />
+    <Resource Include="lib\LightJson\LICENSE.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
