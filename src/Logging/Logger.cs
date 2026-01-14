@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using TaystJkUpdater.Updater;
 
 namespace TaystJkUpdater.Logging
 {
@@ -15,8 +16,7 @@ namespace TaystJkUpdater.Logging
         {
             // Log to %LOCALAPPDATA% to protect user privacy,
             // i.e. avoid making all TaystJK launch times available to all users (on a multi-user system).
-            logFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
-                + Path.DirectorySeparatorChar + "TaystJK Updater";
+            logFolderPath = AppEnvironment.PathToUpdaterLocalAppData;
             LogFilePath = logFolderPath + Path.DirectorySeparatorChar + "Updater.log";
             using (Process currentProcess = Process.GetCurrentProcess())
             {

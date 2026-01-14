@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Security;
+using TaystJkUpdater.Updater;
 
-namespace TaystJkUpdater.Updater
+namespace TaystJkUpdater.ProgramData
 {
     /// <summary>
     /// File-based lock preventing other instances of the updater from modifying the same files at the same time.
@@ -16,6 +17,7 @@ namespace TaystJkUpdater.Updater
         /// Creates a lock file, unless already locked by another process.
         /// </summary>
         /// <returns>An UpdateLock instance, or null if already locked by another process.</returns>
+        /// <exception cref="ProgramDataNotWritableException"></exception>
         public static UpdateLock Acquire()
         {
             try
@@ -32,10 +34,10 @@ namespace TaystJkUpdater.Updater
         /// <summary>
         /// Call Acquire() instead
         /// </summary>
+        /// <exception cref="ProgramDataNotWritableException"></exception>
         private UpdateLock()
         {
-            string pathToLockFolder = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData)
-                + Path.DirectorySeparatorChar + "TaystJK Updater";
+            string pathToLockFolder = AppEnvironment.PathToUpdaterProgramData;
             
             try
             {

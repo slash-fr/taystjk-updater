@@ -78,20 +78,23 @@
     </ApplicationDefinition>
     <Compile Include="src\GitHub\GithubApiClient.cs" />
     <Compile Include="src\GitHub\GithubApiException.cs" />
-    <Compile Include="src\GitHub\ReleaseData.cs" />
+    <Compile Include="src\GitHub\ReleaseInfo.cs" />
     <Compile Include="src\GitHub\TooManyRequestsException.cs" />
     <Compile Include="src\Icons\SuccessIcon.xaml.cs">
       <DependentUpon>SuccessIcon.xaml</DependentUpon>
     </Compile>
-    <Compile Include="src\Updater\ProgramDataNotWritableException.cs" />
+    <Compile Include="src\ProgramData\PersistentState.cs" />
+    <Compile Include="src\ProgramData\ProgramDataNotReadableException.cs" />
+    <Compile Include="src\ProgramData\ProgramDataNotWritableException.cs" />
     <Compile Include="src\Logging\UnloggableErrorException.cs" />
     <Compile Include="src\Icons\ErrorIcon.xaml.cs">
       <DependentUpon>ErrorIcon.xaml</DependentUpon>
     </Compile>
     <Compile Include="src\Logging\Logger.cs" />
+    <Compile Include="src\Updater\AppEnvironment.cs" />
     <Compile Include="src\Updater\UpdateCheckResult.cs" />
     <Compile Include="src\Updater\TaystJkUpdaterLogic.cs" />
-    <Compile Include="src\Updater\UpdateLock.cs" />
+    <Compile Include="src\ProgramData\UpdateLock.cs" />
     <Compile Include="src\Icons\UpdatingIcon.xaml.cs">
       <DependentUpon>UpdatingIcon.xaml</DependentUpon>
     </Compile>
@@ -180,5 +183,6 @@
   <ItemGroup>
     <Resource Include="lib\LightJson\LICENSE.txt" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TaystJkUpdater.GitHub;
 using TaystJkUpdater.Logging;
+using TaystJkUpdater.ProgramData;
 
 namespace TaystJkUpdater.Updater
 {
@@ -45,7 +46,10 @@ namespace TaystJkUpdater.Updater
         /// Check whether an update is available for TaystJK
         /// </summary>
         /// <param name="githubApiClient">GitHub API Client (dependency to inject)</param>
-        public async Task<UpdateCheckResult> CheckForUpdates(GithubApiClient githubApiClient)
+        /// <param name="persistentState">Updater state (for reading and writing)</param>
+        public async Task<UpdateCheckResult> CheckForUpdates(
+            GithubApiClient githubApiClient,
+            PersistentState persistentState)
         {
             if (String.IsNullOrEmpty(pathToTaystJkExe))
             {
@@ -54,21 +58,35 @@ namespace TaystJkUpdater.Updater
                 );
             }
 
-            // TODO: Don't check more than once per hour
-            //logger.Info("Already checked less than an hour ago for " + '"' + pathToTaystJkExe + '"' + '.');
-            //return UpdateCheckResult.AlreadyCheckedRecently;
+            // Don't check more than once per hour
+            if (persistentState.LastCheckedByPath.TryGetValue(pathToTaystJkExe, out DateTime lastChecked)
+                && DateTime.Now < lastChecked.AddHours(1))
+            {
+                logger.Info("Already checked less than an hour ago.");
+                return UpdateCheckResult.AlreadyCheckedRecently;
+            }
 
-            ReleaseData latestRelease;
+            if (!(persistentState.GithubThrottledUntil is null)
+                && persistentState.GithubThrottledUntil >= DateTime.Now)
+            {
+                logger.Warning("GitHub API is throttled due to a recent 429 error.");
+                return UpdateCheckResult.AlreadyCheckedRecently;
+            }
+
+            ReleaseInfo latestRelease;
 
             try
             {
-                latestRelease = await githubApiClient.GetLatestTaystJkRelease();
+                latestRelease = await githubApiClient.GetLatestTaystJkReleaseInfo();
             }
             catch (TooManyRequestsException exception)
             {
-                // TODO: Do not retry for one hour
-                // TODO: Add something like "github_throttled_until" to "state.json" ?
                 logger.Error(exception.Message);
+
+                persistentState.LastCheckedByPath[pathToTaystJkExe] = DateTime.Now;
+                persistentState.GithubThrottledUntil = DateTime.Now.AddHours(1);
+                persistentState.Save();
+
                 return UpdateCheckResult.Error;
             }
             catch (GithubApiException exception)
@@ -81,6 +99,9 @@ namespace TaystJkUpdater.Updater
                 {
                     logger.Error(exception.Message);
                 }
+
+                // Don't update persistentState.LastCheckedByPath here,
+                // because we want to try again as soon as possible (i.e. even less than an hour later)
 
                 return UpdateCheckResult.Error;
             }
@@ -98,6 +119,10 @@ namespace TaystJkUpdater.Updater
                         logger.Info("Current commit: " + currentCommitHash);
                         logger.Info("Latest release: " + match.Value);
 
+                        // Already up-to-date - Don't check during the next hour
+                        persistentState.LastCheckedByPath[pathToTaystJkExe] = DateTime.Now;
+                        persistentState.Save();
+
                         return UpdateCheckResult.AlreadyUpToDate;
                     }
 
@@ -105,13 +130,17 @@ namespace TaystJkUpdater.Updater
                     logger.Info("Current commit: " + currentCommitHash);
                     logger.Info("Latest release: " + match.Value);
 
+                    // Don't update persistentState.LastCheckedByPath yet,
+                    // because the update might fail before being fully installed,
+                    // in which case, we want to try again as soon as possible (i.e. even less than an hour later)
+
                     return UpdateCheckResult.NeedsUpdate;
                 }
             }
 
             // Otherwise, use the date
-            // TODO: Which one ? Compare LastWriteTime to published_at ? Or CreationTime to create_at ?
-            DateTime localCreationTime = new FileInfo(pathToTaystJkExe).CreationTime; // TODO: Use CreationTimeUtc ?
+            // TODO: Which one ? Compare LastWriteTime to published_at ? Or CreationTime to created_at ?
+            DateTime localCreationTime = new FileInfo(pathToTaystJkExe).CreationTime;
 
             if (localCreationTime < latestRelease.CreatedAt)
             {
@@ -119,9 +148,16 @@ namespace TaystJkUpdater.Updater
                 logger.Info("Local exe file created at: " + localCreationTime.ToString("yyyy-MM-dd HH:mm:ss"));
                 logger.Info("Latest release created at: " + latestRelease.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
 
+                // Don't update persistentState.LastCheckedByPath yet,
+                // because the update might fail before being fully installed,
+                // in which case, we want to try again as soon as possible (i.e. even less than an hour later)
+
                 return UpdateCheckResult.NeedsUpdate;
             }
 
+            // Already up to date - Don't check during the next hour
+            persistentState.LastCheckedByPath[pathToTaystJkExe] = DateTime.Now;
+            persistentState.Save();
 
             logger.Info("TaystJK is already up to date, according to the file timestamps.");
             logger.Info("Local exe file created at: " + localCreationTime.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -206,7 +242,7 @@ namespace TaystJkUpdater.Updater
         /// Copy files from the new version to the game's folder
         /// </summary>
         /// <returns>true if the files were copied successfully, false otherwise</returns>
-        public async Task<bool> CopyNewFiles()
+        public async Task<bool> CopyNewFiles(PersistentState persistentState)
         {
             // TODO: actually attempt to copy files from the new version
             await Task.Delay(1000);
@@ -219,6 +255,10 @@ namespace TaystJkUpdater.Updater
                     return false;
                 default:
                     logger.Info("Applied TaystJK update successfully."); // TODO: Be more specific
+
+                    persistentState.LastCheckedByPath[pathToTaystJkExe] = DateTime.Now;
+                    persistentState.Save();
+
                     return true;
             }
         }

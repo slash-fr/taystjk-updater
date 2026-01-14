@@ -18,7 +18,12 @@ namespace TaystJkUpdater.GitHub
             httpClient.DefaultRequestHeaders.Add("User-Agent", "TaystJK Updater");
         }
 
-        public async Task<ReleaseData> GetLatestTaystJkRelease()
+        /// <summary>
+        /// Gets info about the latest TaystJK release, from the GitHub API. Does not download any assets.
+        /// </summary>
+        /// <exception cref="GithubApiException"></exception>
+        /// <exception cref="TooManyRequestsException"></exception>
+        public async Task<ReleaseInfo> GetLatestTaystJkReleaseInfo()
         {
             Uri requestUri = new Uri("http://localhost/latest.php");
             // TODO: "https://api.github.com/repos/taysta/TaystJK/releases/tags/latest"
@@ -27,6 +32,7 @@ namespace TaystJkUpdater.GitHub
 
             try
             {
+                // TODO: cancellationToken
                 response = await httpClient.GetAsync(requestUri);
             }
             catch (HttpRequestException exception)
@@ -75,7 +81,7 @@ namespace TaystJkUpdater.GitHub
                 );
             }
 
-            return new ReleaseData(parsedResponse["created_at"], parsedResponse["target_commitish"]);
+            return new ReleaseInfo(parsedResponse["created_at"], parsedResponse["target_commitish"]);
         }
     }
 }

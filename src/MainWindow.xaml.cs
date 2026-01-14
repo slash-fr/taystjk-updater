@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Media.Animation;
 using TaystJkUpdater.GitHub;
 using TaystJkUpdater.Logging;
+using TaystJkUpdater.ProgramData;
 using TaystJkUpdater.Updater;
 
 namespace TaystJkUpdater
@@ -28,8 +29,33 @@ namespace TaystJkUpdater
             try
             {
                 logger = new Logger();
-                await PerformUpdate(logger);
-                updateLock?.Dispose();
+                try
+                {
+                    await PerformUpdate(logger);
+                }
+                catch (ProgramDataNotReadableException exception)
+                {
+                    logger.Error(exception.Message, exception.InnerException);
+                    DisplayError("Could not read from the ProgramData folder!");
+                }
+                catch (ProgramDataNotWritableException exception)
+                {
+                    logger.Error(exception.Message, exception.InnerException);
+                    DisplayError("Could not write to the ProgramData folder!");
+                }
+                catch (Exception exception)
+                {
+                    if (!(exception is UnloggableErrorException))
+                    {
+                        const string message = "An unexpected error occurred!";
+                        logger.Error(message, exception);
+                        DisplayError(message);
+                    }
+                }
+                finally
+                {
+                    updateLock?.Dispose();
+                }
             }
             catch (UnloggableErrorException exception)
             {
@@ -50,67 +76,30 @@ namespace TaystJkUpdater
                 );
                 Close();
             }
-            catch (Exception exception)
-            {
-                MessageBox.Show(
-                    exception.Message,
-                    exception.GetType().ToString(), // Caption
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error
-                );
-                Close();
-            }
         }
 
         private async Task PerformUpdate(Logger logger)
         {
             GithubApiClient githubApiClient = new GithubApiClient();
+            PersistentState persistentState = new PersistentState();
+
             taystJkUpdater = new TaystJkUpdaterLogic(logger);
 
-            if (!taystJkUpdater.InitializeUpdater())
+            if (!await Task.Run(taystJkUpdater.InitializeUpdater))
             {
                 DisplayError("TaystJK executable was not found!", true);
                 return;
             }
 
-            try
-            {
-                int totalLockDelayInSeconds = 0;
-                updateLock = UpdateLock.Acquire();
-                while (updateLock is null)
-                {
-                    if (totalLockDelayInSeconds == 0)
-                    {
-                        StatusLabel.Content = "Waiting for an update to finish...";
-                        logger.Warning("Could not acquire the update lock. Waiting until the lock is released.");
-                    }
-                    else if (totalLockDelayInSeconds == 5)
-                    {
-                        // After 5 seconds, show the "Exit" button (+ "Open log file" button), but keep trying
-                        LaunchButton.Visibility = Visibility.Collapsed;
-                        ButtonRow.Visibility = Visibility.Visible;
-                        ((Storyboard)ButtonRow.Resources["AnimateIn"]).Begin(this);
-                    }
+            await AcquireLock(logger);
 
-                    await Task.Delay(1000);
-                    totalLockDelayInSeconds++;
-                    updateLock = UpdateLock.Acquire();
-                }
-            }
-            catch (ProgramDataNotWritableException exception)
-            {
-                logger.Error(exception.Message, exception.InnerException);
-                DisplayError("Could not write to the ProgramData folder!");
-                return;
-            }
-
-            ButtonRow.Visibility = Visibility.Hidden;
+            await Task.Run(persistentState.Load);
 
             StatusLabel.Content = "Checking for TaystJK updates...";
             SkipButton.Visibility = Visibility.Visible;
 
             UpdateCheckResult updateCheckResult = await Task.Run(
-                () => taystJkUpdater.CheckForUpdates(githubApiClient)
+                () => taystJkUpdater.CheckForUpdates(githubApiClient, persistentState)
             );
 
             if (cancellationTokenSource.IsCancellationRequested)
@@ -181,13 +170,44 @@ namespace TaystJkUpdater
 
             StatusLabel.Content = "Applying TaystJK update...";
             SkipButton.Visibility = Visibility.Hidden; // Skipping would leave a partially updated version...
-            if (!await taystJkUpdater.CopyNewFiles())
+            if (!await taystJkUpdater.CopyNewFiles(persistentState))
             {
                 DisplayError("Failed to install the new TaystJK version!");
                 return;
             }
 
             await LaunchTaystJkWithSuccessMessage("Update complete. Launching...");
+        }
+
+        /// <summary>
+        /// Waits until other instances of the updater finish their job.
+        /// </summary>
+        /// <exception cref="ProgramDataNotWritableException"></exception>
+        private async Task AcquireLock(Logger logger)
+        {
+            int totalLockDelayInSeconds = 0;
+            updateLock = UpdateLock.Acquire();
+            while (updateLock is null)
+            {
+                if (totalLockDelayInSeconds == 0)
+                {
+                    StatusLabel.Content = "Waiting for an update to finish...";
+                    logger.Warning("Could not acquire the update lock. Waiting until the lock is released.");
+                }
+                else if (totalLockDelayInSeconds == 5)
+                {
+                    // After 5 seconds, show the "Exit" button (+ "Open log file" button), but keep trying
+                    LaunchButton.Visibility = Visibility.Collapsed;
+                    ButtonRow.Visibility = Visibility.Visible;
+                    ((Storyboard)ButtonRow.Resources["AnimateIn"]).Begin(this);
+                }
+
+                await Task.Delay(1000);
+                totalLockDelayInSeconds++;
+                updateLock = UpdateLock.Acquire();
+            }
+
+            ButtonRow.Visibility = Visibility.Hidden;
         }
 
         /// <summary>
@@ -223,6 +243,8 @@ namespace TaystJkUpdater
         /// <param name="successMessage">Status message to display</param>
         private async Task LaunchTaystJkWithSuccessMessage(string successMessage)
         {
+            updateLock?.Dispose(); // Release the lock now (no need to wait until the updater closes)
+
             StatusLabel.Content = successMessage;
 
             await UpdatingIcon.MorphIntoCircle();
