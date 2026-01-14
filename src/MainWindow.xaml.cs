@@ -33,6 +33,11 @@ namespace TaystJkUpdater
                 {
                     await PerformUpdate(logger);
                 }
+                catch (TaskCanceledException exception)
+                {
+                    // Typically happens when the user clicks the "Skip" button
+                    logger.Info("Cancelled " + exception.Task);
+                }
                 catch (ProgramDataNotReadableException exception)
                 {
                     logger.Error(exception.Message, exception.InnerException);
@@ -133,7 +138,12 @@ namespace TaystJkUpdater
             progress.ProgressChanged += (progressSender, progressPercentage) => {
                 StatusLabel.Content = "Downloading TaystJK update... (" + progressPercentage + "%)";
             };
-            if (!await taystJkUpdater.DownloadLatestRelease(cancellationTokenSource.Token, progress))
+
+            bool downloadedSuccessfully = await Task.Run(
+                () => taystJkUpdater.DownloadLatestRelease(cancellationTokenSource.Token, progress)
+            );
+
+            if (!downloadedSuccessfully)
             {
                 DisplayError("Failed to download the new TaystJK version!");
                 return;
@@ -145,7 +155,7 @@ namespace TaystJkUpdater
             }
 
             StatusLabel.Content = "Unpacking TaystJK update...";
-            if (!await taystJkUpdater.UnpackLatestRelease())
+            if (!await Task.Run(taystJkUpdater.UnpackLatestRelease))
             {
                 DisplayError("Failed to unpack the new TaystJK version!");
                 return;
@@ -157,7 +167,10 @@ namespace TaystJkUpdater
             }
 
             StatusLabel.Content = "Backing up current TaystJK files...";
-            if (!await taystJkUpdater.BackupCurrentFiles())
+            bool backedUpSuccessfully = await Task.Run(
+                () => taystJkUpdater.BackupCurrentFiles(cancellationTokenSource.Token)
+            );
+            if (!backedUpSuccessfully)
             {
                 DisplayError("Failed to backup the current TaystJK version!");
                 return;

@@ -24,6 +24,8 @@ namespace TaystJkUpdater.Logging
             }
         }
 
+        // TODO: add a DEBUG level?
+
         public void Info(string message)
         {
             try

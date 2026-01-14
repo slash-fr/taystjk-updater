@@ -59,6 +59,8 @@ namespace TaystJkUpdater.Updater
                 );
             }
 
+            logger.Info("Checking for TaystJK updates..."); // TODO: Log as a DEBUG message?
+
             // Don't check more than once per hour
             if (persistentState.LastCheckedByPath.TryGetValue(pathToTaystJkExe, out DateTime lastChecked)
                 && DateTime.Now < lastChecked.AddHours(1))
@@ -174,6 +176,9 @@ namespace TaystJkUpdater.Updater
         /// <returns>true if the update was downloaded successfully, false otherwise</returns>
         public async Task<bool> DownloadLatestRelease(CancellationToken cancellationToken, IProgress<int> progress)
         {
+            logger.Info("Downloading the latest TaystJK release..."); // TODO: Log as a DEBUG message?
+            // TODO: Log the exact URL
+
             // TODO: actually attempt to download the update
             await Task.Delay(100);
 
@@ -205,6 +210,9 @@ namespace TaystJkUpdater.Updater
         /// <returns>true if the new version was unpacked successfully, false otherwise</returns>
         public async Task<bool> UnpackLatestRelease()
         {
+            logger.Info("Unpacking the latest TaystJK release..."); // TODO: Log as a DEBUG message?
+            // TODO: Log the exact path to the ZIP file
+
             // TODO: actually attempt to unzip the new version
             await Task.Delay(1000);
 
@@ -223,8 +231,11 @@ namespace TaystJkUpdater.Updater
         /// Backup files that would get overwritten by the update
         /// </summary>
         /// <returns>true if the files were backed up successfully, false otherwise</returns>
-        public async Task<bool> BackupCurrentFiles()
+        public async Task<bool> BackupCurrentFiles(CancellationToken cancellationToken)
         {
+            logger.Info("Backing up current TaystJK Files..."); // TODO: Log as a DEBUG message?
+            // TODO: Log the exact destination folder
+
             // TODO: actually attempt to backup files that would get overwritten by the update
             await Task.Delay(1000);
 
@@ -245,6 +256,9 @@ namespace TaystJkUpdater.Updater
         /// <returns>true if the files were copied successfully, false otherwise</returns>
         public async Task<bool> CopyNewFiles(PersistentState persistentState)
         {
+            logger.Info("Copying files from the new TaystJK version..."); // TODO: Log as a DEBUG message?
+            // TODO: Log the exact source folder
+
             // TODO: actually attempt to copy files from the new version
             await Task.Delay(1000);
 
@@ -266,6 +280,7 @@ namespace TaystJkUpdater.Updater
 
         public void LaunchTaystJK()
         {
+            logger.Info("Launching TaystJK..."); // TODO: Log as a DEBUG message?
             using (Process.Start(pathToTaystJkExe, commandLineArgsAsString)) { }
         }
         
