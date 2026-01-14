@@ -24,7 +24,19 @@ namespace TaystJkUpdater.Logging
             }
         }
 
-        // TODO: add a DEBUG level?
+        public void Debug(string message)
+        {
+#if DEBUG
+            try
+            {
+                WriteLogMessage("DEBUG", message);
+            }
+            catch (Exception)
+            {
+                // Don't crash the app over a logging error...
+            }
+#endif
+        }
 
         public void Info(string message)
         {

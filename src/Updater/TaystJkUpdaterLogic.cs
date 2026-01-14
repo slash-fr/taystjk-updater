@@ -59,7 +59,7 @@ namespace TaystJkUpdater.Updater
                 );
             }
 
-            logger.Info("Checking for TaystJK updates..."); // TODO: Log as a DEBUG message?
+            logger.Debug("Checking for TaystJK updates...");
 
             // Don't check more than once per hour
             if (persistentState.LastCheckedByPath.TryGetValue(pathToTaystJkExe, out DateTime lastChecked)
@@ -119,8 +119,8 @@ namespace TaystJkUpdater.Updater
                     if (match.Value.ToLower().StartsWith(currentCommitHash.ToLower()))
                     {
                         logger.Info("TaystJK is already up to date, according to the commit hash.");
-                        logger.Info("Current commit: " + currentCommitHash);
-                        logger.Info("Latest release: " + match.Value);
+                        logger.Debug("Current commit: " + currentCommitHash);
+                        logger.Debug("Latest release: " + match.Value);
 
                         // Already up-to-date - Don't check during the next hour
                         persistentState.LastCheckedByPath[pathToTaystJkExe] = DateTime.Now;
@@ -163,8 +163,8 @@ namespace TaystJkUpdater.Updater
             persistentState.Save();
 
             logger.Info("TaystJK is already up to date, according to the file timestamps.");
-            logger.Info("Local exe file created at: " + localCreationTime.ToString("yyyy-MM-dd HH:mm:ss"));
-            logger.Info("Latest release created at: " + latestRelease.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
+            logger.Debug("Local exe file created at: " + localCreationTime.ToString("yyyy-MM-dd HH:mm:ss"));
+            logger.Debug("Latest release created at: " + latestRelease.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
 
             return UpdateCheckResult.AlreadyUpToDate;
         }
@@ -176,7 +176,7 @@ namespace TaystJkUpdater.Updater
         /// <returns>true if the update was downloaded successfully, false otherwise</returns>
         public async Task<bool> DownloadLatestRelease(CancellationToken cancellationToken, IProgress<int> progress)
         {
-            logger.Info("Downloading the latest TaystJK release..."); // TODO: Log as a DEBUG message?
+            logger.Debug("Downloading the latest TaystJK release...");
             // TODO: Log the exact URL
 
             // TODO: actually attempt to download the update
@@ -210,7 +210,7 @@ namespace TaystJkUpdater.Updater
         /// <returns>true if the new version was unpacked successfully, false otherwise</returns>
         public async Task<bool> UnpackLatestRelease()
         {
-            logger.Info("Unpacking the latest TaystJK release..."); // TODO: Log as a DEBUG message?
+            logger.Debug("Unpacking the latest TaystJK release...");
             // TODO: Log the exact path to the ZIP file
 
             // TODO: actually attempt to unzip the new version
@@ -233,7 +233,7 @@ namespace TaystJkUpdater.Updater
         /// <returns>true if the files were backed up successfully, false otherwise</returns>
         public async Task<bool> BackupCurrentFiles(CancellationToken cancellationToken)
         {
-            logger.Info("Backing up current TaystJK Files..."); // TODO: Log as a DEBUG message?
+            logger.Debug("Backing up current TaystJK Files...");
             // TODO: Log the exact destination folder
 
             // TODO: actually attempt to backup files that would get overwritten by the update
@@ -256,7 +256,7 @@ namespace TaystJkUpdater.Updater
         /// <returns>true if the files were copied successfully, false otherwise</returns>
         public async Task<bool> CopyNewFiles(PersistentState persistentState)
         {
-            logger.Info("Copying files from the new TaystJK version..."); // TODO: Log as a DEBUG message?
+            logger.Debug("Copying files from the new TaystJK version...");
             // TODO: Log the exact source folder
 
             // TODO: actually attempt to copy files from the new version
@@ -280,7 +280,7 @@ namespace TaystJkUpdater.Updater
 
         public void LaunchTaystJK()
         {
-            logger.Info("Launching TaystJK..."); // TODO: Log as a DEBUG message?
+            logger.Debug("Launching TaystJK...");
             using (Process.Start(pathToTaystJkExe, commandLineArgsAsString)) { }
         }
         
@@ -419,7 +419,6 @@ namespace TaystJkUpdater.Updater
                         string commitHash = match.Groups[1].Value;
                         logger.Info(
                             "Detected commit hash " + '"' + commitHash + '"'
-                            + " in " + '"' + pathToTaystJkExe + '"'
                         );
                         return commitHash;
                     }

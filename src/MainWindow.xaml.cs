@@ -36,7 +36,7 @@ namespace TaystJkUpdater
                 catch (TaskCanceledException exception)
                 {
                     // Typically happens when the user clicks the "Skip" button
-                    logger.Info("Cancelled " + exception.Task);
+                    logger.Debug("Cancelled " + exception.Task);
                 }
                 catch (ProgramDataNotReadableException exception)
                 {
@@ -275,6 +275,7 @@ namespace TaystJkUpdater
 
         private async void LogsButton_Click(object sender, RoutedEventArgs e)
         {
+            logger.Debug("The \"Open log file\" button was clicked.");
             LogsButton.IsEnabled = false;
 
             using (Process textEditorProcess = new Process())
@@ -292,6 +293,7 @@ namespace TaystJkUpdater
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)
         {
+            logger.Debug("The \"Exit\" button was clicked.");
             Close();
         }
 
