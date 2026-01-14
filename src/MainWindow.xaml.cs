@@ -99,7 +99,7 @@ namespace TaystJkUpdater
             SkipButton.Visibility = Visibility.Visible;
 
             UpdateCheckResult updateCheckResult = await Task.Run(
-                () => taystJkUpdater.CheckForUpdates(githubApiClient, persistentState)
+                () => taystJkUpdater.CheckForUpdates(githubApiClient, cancellationTokenSource.Token, persistentState)
             );
 
             if (cancellationTokenSource.IsCancellationRequested)

@@ -49,6 +49,7 @@ namespace TaystJkUpdater.Updater
         /// <param name="persistentState">Updater state (for reading and writing)</param>
         public async Task<UpdateCheckResult> CheckForUpdates(
             GithubApiClient githubApiClient,
+            CancellationToken cancellationToken,
             PersistentState persistentState)
         {
             if (String.IsNullOrEmpty(pathToTaystJkExe))
@@ -77,7 +78,7 @@ namespace TaystJkUpdater.Updater
 
             try
             {
-                latestRelease = await githubApiClient.GetLatestTaystJkReleaseInfo();
+                latestRelease = await githubApiClient.GetLatestTaystJkReleaseInfo(cancellationToken);
             }
             catch (TooManyRequestsException exception)
             {

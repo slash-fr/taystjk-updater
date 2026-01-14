@@ -2,6 +2,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TaystJkUpdater.GitHub
@@ -23,7 +24,7 @@ namespace TaystJkUpdater.GitHub
         /// </summary>
         /// <exception cref="GithubApiException"></exception>
         /// <exception cref="TooManyRequestsException"></exception>
-        public async Task<ReleaseInfo> GetLatestTaystJkReleaseInfo()
+        public async Task<ReleaseInfo> GetLatestTaystJkReleaseInfo(CancellationToken cancellationToken)
         {
             Uri requestUri = new Uri("http://localhost/latest.php");
             // TODO: "https://api.github.com/repos/taysta/TaystJK/releases/tags/latest"
@@ -32,8 +33,7 @@ namespace TaystJkUpdater.GitHub
 
             try
             {
-                // TODO: cancellationToken
-                response = await httpClient.GetAsync(requestUri);
+                response = await httpClient.GetAsync(requestUri, cancellationToken);
             }
             catch (HttpRequestException exception)
             {
