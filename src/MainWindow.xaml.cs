@@ -102,7 +102,7 @@ namespace TaystJkUpdater
 
             if (!await Task.Run(taystJkUpdater.InitializeUpdater))
             {
-                DisplayError("TaystJK executable was not found!", true);
+                DisplayError("TaystJK executable was not found!", preventsGameLaunch: true);
                 return;
             }
 
@@ -274,8 +274,8 @@ namespace TaystJkUpdater
             SuccessIcon.Visibility = Visibility.Visible;
             UpdatingIcon.Visibility = Visibility.Hidden;
 
-            _ = Task.Run(taystJkUpdater.LaunchTaystJK);
             Topmost = true;
+            _ = Task.Run(taystJkUpdater.LaunchTaystJK);
 
             await SuccessIcon.AnimateIn();
             await Task.Delay(2000);
@@ -313,9 +313,9 @@ namespace TaystJkUpdater
             ExitButton.IsEnabled = false;
             LaunchButton.IsEnabled = false;
             StatusLabel.Content = "Launching...";
+            Topmost = true;
             await Task.Run(taystJkUpdater.LaunchTaystJK);
             await ErrorIcon.AnimateOut();
-            Topmost = true;
             await Task.Delay(1000);
             Close();
         }
