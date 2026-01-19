@@ -24,9 +24,17 @@ namespace TaystJkUpdater.Updater
             "taystjk.arm64.exe", // Just in case...
         };
 
+        private readonly Dictionary<string, string> taystJkArchitectureByFilename = new Dictionary<string, string>()
+        {
+            { "taystjk.x86_64.exe", "x86_64" },
+            { "taystjk.x86.exe",    "x86"    },
+            { "taystjk.arm64.exe",  "arm64"  },
+        };
+
         private readonly Logger logger;
         private string commandLineArgsAsString = "";
         private string pathToTaystJkExe = "";
+        private string taystJkArchitecture = "";
 
         public TaystJkUpdaterLogic(Logger logger)
         {
@@ -39,7 +47,7 @@ namespace TaystJkUpdater.Updater
         /// <returns>true on success, false if TaystJK exe was not found</returns>
         public bool InitializeUpdater()
         {
-            return ParseCommandLineArgs() && FindTaystJkExe();
+            return ParseCommandLineArgs() && FindTaystJkExe() && DetectTaystJkArchitecture();
         }
 
         /// <summary>
@@ -364,6 +372,26 @@ namespace TaystJkUpdater.Updater
             );
 
             return false;
+        }
+
+        /// <summary>
+        /// Detects the CPU architecture from the name of the TaystJK executable,
+        /// and initializes the "taystJkArchitecture" class attribute accordingly.
+        /// </summary>
+        /// <returns>True on success, false on failure.</returns>
+        private bool DetectTaystJkArchitecture()
+        {
+            string basename = Path.GetFileName(pathToTaystJkExe);
+            if (!taystJkArchitectureByFilename.ContainsKey(basename))
+            {
+                logger.Error("Could not determine the architecture!");
+                return false;
+            }
+
+            taystJkArchitecture = taystJkArchitectureByFilename[basename];
+            logger.Debug("Detected architecture: " + taystJkArchitecture);
+
+            return true;
         }
 
         /// <summary>
