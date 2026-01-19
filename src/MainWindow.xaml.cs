@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using TaystJkUpdater.GitHub;
 using TaystJkUpdater.Logging;
@@ -29,8 +30,17 @@ namespace TaystJkUpdater
             try
             {
                 logger = new Logger();
+
                 try
                 {
+                    // Try to put the window in the same spot as the initial splash screen
+                    DpiScale dpiScale = VisualTreeHelper.GetDpi(this);
+                    this.Left = (SystemParameters.PrimaryScreenWidth / dpiScale.DpiScaleX - this.Width) / 2;
+                    this.Top = (SystemParameters.PrimaryScreenHeight / dpiScale.DpiScaleY - this.Height) / 2;
+
+                    // Close the initial splash screen
+                    ((App)App.Current).SplashScreen.Close(TimeSpan.FromSeconds(0.5));
+
                     await PerformUpdate(logger);
                 }
                 catch (TaskCanceledException exception)

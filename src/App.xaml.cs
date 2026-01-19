@@ -1,17 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 
 namespace TaystJkUpdater
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
     public partial class App : Application
     {
+        public SplashScreen SplashScreen { get; }
+
+        App()
+        {
+            // Unfortunately, the splash screen does not account for DPI scaling (unlike the main window).
+            // We could use different images for different DPI scaling settings, but...
+            // ...there is an unlimited amount of possible scaling values (users can set custom values).
+            SplashScreen = new SplashScreen("/assets/background-image.jpg");
+            SplashScreen.Show(autoClose: false, topMost: false);
+        }
     }
 }
