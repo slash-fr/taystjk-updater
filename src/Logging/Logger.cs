@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using TaystJkUpdater.Updater;
 
 namespace TaystJkUpdater.Logging
@@ -17,7 +18,8 @@ namespace TaystJkUpdater.Logging
             // Log to %LOCALAPPDATA% to protect user privacy,
             // i.e. avoid making all TaystJK launch times available to all users (on a multi-user system).
             logFolderPath = AppEnvironment.PathToUpdaterLocalAppData;
-            LogFilePath = logFolderPath + Path.DirectorySeparatorChar + "Updater.log";
+            LogFilePath = logFolderPath + Path.DirectorySeparatorChar
+                + DateTime.Now.ToString("yyyy-MM") + "-updater-log.txt";
             using (Process currentProcess = Process.GetCurrentProcess())
             {
                 processId = currentProcess.Id;
@@ -82,17 +84,50 @@ namespace TaystJkUpdater.Logging
 
         private void WriteLogMessage(string level, string message)
         {
-            if (!Directory.Exists(logFolderPath))
+            // Global Mutex (cf. https://stackoverflow.com/a/229567)
+            string mutexName = "Global\\TaystJK_Updater_WriteLogMessage";
+
+            using (Mutex mutex = new Mutex(false, mutexName))
             {
-                Directory.CreateDirectory(logFolderPath);
+                bool hasHandle = false;
+                try
+                {
+                    try
+                    {
+                        hasHandle = mutex.WaitOne();
+                    }
+                    catch (AbandonedMutexException)
+                    {
+                        // Abandoned by another process
+                        hasHandle = true;
+                    }
+
+                    ////////////////////////////////////////////////////////////
+                    // Enough boilerplate already, let's log the damn message
+
+                    if (!Directory.Exists(logFolderPath))
+                    {
+                        Directory.CreateDirectory(logFolderPath);
+                    }
+
+                    string dateTimeString = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+                    File.AppendAllText(
+                        LogFilePath,
+                        dateTimeString + " - [" + processId + "] - " + level + " - " + message + "\n"
+                    );
+
+                    // End of the logging code
+                    ////////////////////////////////////////////////////////////
+                }
+                finally
+                {
+                    if (hasHandle)
+                    {
+                        mutex.ReleaseMutex();
+                    }
+                }
             }
-
-            string dateTimeString = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-
-            File.AppendAllText(
-                LogFilePath,
-                dateTimeString + " - [" + processId + "] - " +  level + " - " + message + "\n"
-            );
         }
     }
 }
