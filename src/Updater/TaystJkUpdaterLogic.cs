@@ -130,7 +130,7 @@ namespace TaystJkUpdater.Updater
             Match match = Regex.Match(latestRelease.TargetCommitish, "^[0-9A-Fa-f]{4,40}$");
             if (match.Success)
             {
-                string currentCommitHash = GetCurrentTaystJkCommitHash();
+                string currentCommitHash = DetectCurrentTaystJkCommitHash();
                 if (!String.IsNullOrEmpty(currentCommitHash))
                 {
                     if (match.Value.ToLower().StartsWith(currentCommitHash.ToLower()))
@@ -376,37 +376,63 @@ namespace TaystJkUpdater.Updater
         /// Copy files from the new version to the game's folder
         /// </summary>
         /// <returns>true if the files were copied successfully, false otherwise</returns>
-        public async Task<bool> CopyNewFiles(PersistentState persistentState)
+        public bool CopyNewFiles(PersistentState persistentState)
         {
-            logger.Debug("Copying files from the new TaystJK version...");
-            // TODO: Log the exact source folder
-
-            // TODO: actually attempt to copy files from the new version
-            await Task.Delay(1000);
-
-            switch (1)
+            if (String.IsNullOrEmpty(pathToTaystJkExe))
             {
-                case 0:
-                    // TODO: Be more specific
-                    logger.Error("An error occurred while copying files from the new TaystJK release.");
-                    return false;
-                default:
-                    logger.Info("Applied TaystJK update successfully."); // TODO: Be more specific
-
-                    persistentState.LastCheckedByPath[pathToTaystJkExe] = DateTime.Now;
-                    persistentState.Save();
-
-                    try
-                    {
-                        ProgramDataHelper.PurgeAllDownloads();
-                    }
-                    catch (ProgramDataNotWritableException)
-                    {
-                        logger.Warning("Could not purge downloads.");
-                    }
-
-                    return true;
+                throw new InvalidOperationException(
+                    "CopyNewFiles() was called too soon (missing: pathToTaystJkExe)."
+                );
             }
+
+            if (String.IsNullOrEmpty(pathToExtractedArchive))
+            {
+                throw new InvalidOperationException(
+                    "CopyNewFiles() was called too soon (missing: pathToExtractedArchive)."
+                );
+            }
+
+            logger.Debug("Copying files from the new TaystJK version...");
+
+            string pathToTaystJkDirectory = Path.GetDirectoryName(pathToTaystJkExe);
+            
+            try
+            {
+                DirectoryInfo sourceDirectory = new DirectoryInfo(pathToExtractedArchive);
+                DirectoryInfo destinationDirectory = new DirectoryInfo(pathToTaystJkDirectory);
+                CopyNewFilesRecursively(sourceDirectory, destinationDirectory);
+            }
+            catch (Exception exception)
+            {
+                if (exception is IOException           || exception is PathTooLongException            ||
+                    exception is FileNotFoundException || exception is DirectoryNotFoundException      ||
+                    exception is SecurityException     || exception is UnauthorizedAccessException     )
+                {
+                    logger.Error("An error occurred while copying files from the new TaystJK release.", exception);
+                    return false;
+                }
+
+                // Unexpected exception, just rethrow it:
+                throw exception;
+            }
+
+            logger.Info("Applied TaystJK update successfully."); // TODO: Be more specific
+            DetectCurrentTaystJkCommitHash();
+
+            persistentState.LastCheckedByPath[pathToTaystJkExe] = DateTime.Now;
+            persistentState.Save();
+
+            try
+            {
+                ProgramDataHelper.PurgeAllDownloads();
+            }
+            catch (ProgramDataNotWritableException exception)
+            {
+                logger.Warning("Could not purge downloads.");
+                logger.Debug(exception.ToString());
+            }
+
+            return true;
         }
 
         public void LaunchTaystJK()
@@ -521,7 +547,7 @@ namespace TaystJkUpdater.Updater
         /// Try to find the current commit hash from the TaystJK executable (best-effort).
         /// </summary>
         /// <returns>The commit hash if found, null otherwise</returns>
-        private string GetCurrentTaystJkCommitHash()
+        private string DetectCurrentTaystJkCommitHash()
         {
             // Ugliest method ever
             try
@@ -672,6 +698,64 @@ namespace TaystJkUpdater.Updater
                 File.Copy(
                     sourceFile.FullName,
                     backupDirectory.FullName + Path.DirectorySeparatorChar + sourceFile.Name
+                );
+            }
+        }
+
+        /// <summary>
+        /// Copies files recursively, and overwrites if necessary.
+        /// </summary>
+        /// <param name="sourceDirectory">Directory with the new TaystJK files</param>
+        /// <param name="destinationDirectory">Directory with the old TaystJK files</param>
+        /// <exception cref="IOException"></exception>
+        /// <exception cref="DirectoryNotFoundException"></exception>
+        /// <exception cref="FileNotFoundException"></exception>
+        /// <exception cref="SecurityException"></exception>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        /// <exception cref="PathTooLongException"></exception>
+        private void CopyNewFilesRecursively(
+            DirectoryInfo sourceDirectory,
+            DirectoryInfo destinationDirectory)
+        {
+            foreach (DirectoryInfo sourceSubdir in sourceDirectory.EnumerateDirectories())
+            {
+                string relativePathToSubdir = sourceSubdir.FullName;
+                if (relativePathToSubdir.StartsWith(pathToExtractedArchive + Path.DirectorySeparatorChar))
+                {
+                    relativePathToSubdir = relativePathToSubdir.Substring(pathToExtractedArchive.Length + 1);
+                }
+
+                DirectoryInfo destinationSubdir = new DirectoryInfo(
+                    destinationDirectory.FullName + Path.DirectorySeparatorChar + sourceSubdir.Name
+                );
+
+                if (!destinationSubdir.Exists)
+                {
+                    logger.Debug("Creating: " + relativePathToSubdir);
+                    destinationSubdir.Create();
+                }
+                else
+                {
+                    logger.Debug("Entering: " + relativePathToSubdir);
+                }
+
+                CopyNewFilesRecursively(sourceSubdir, destinationSubdir);
+            }
+
+            foreach (FileInfo sourceFile in sourceDirectory.EnumerateFiles())
+            {
+                string relativePathToFile = sourceFile.FullName;
+                if (relativePathToFile.StartsWith(pathToExtractedArchive + Path.DirectorySeparatorChar))
+                {
+                    relativePathToFile = relativePathToFile.Substring(pathToExtractedArchive.Length + 1);
+                }
+
+                logger.Debug("Copying:  " + relativePathToFile);
+
+                File.Copy(
+                    sourceFile.FullName,
+                    destinationDirectory.FullName + Path.DirectorySeparatorChar + sourceFile.Name,
+                    overwrite: true
                 );
             }
         }

@@ -194,7 +194,10 @@ namespace TaystJkUpdater
 
             StatusLabel.Content = "Applying TaystJK update...";
             SkipButton.Visibility = Visibility.Hidden; // Skipping would leave a partially updated version...
-            if (!await taystJkUpdater.CopyNewFiles(persistentState))
+            bool copiedNewFilesSuccessfully = await Task.Run(
+                () => taystJkUpdater.CopyNewFiles(persistentState)
+            );
+            if (!copiedNewFilesSuccessfully)
             {
                 DisplayError("Failed to install the new TaystJK version!");
                 return;
