@@ -208,9 +208,10 @@ namespace TaystJkUpdater.Updater
             {
                 ProgramDataHelper.PurgeAllDownloads();
             }
-            catch (ProgramDataNotWritableException)
+            catch (ProgramDataNotWritableException exception)
             {
                 logger.Warning("Could not purge old downloads.");
+                logger.Debug(exception.ToString());
             }
 
             FileStream destinationFilestream = null;
@@ -322,6 +323,16 @@ namespace TaystJkUpdater.Updater
                 throw new InvalidOperationException(
                     "BackupCurrentFiles() was called too soon (missing: pathToExtractedArchive)."
                 );
+            }
+
+            try
+            {
+                ProgramDataHelper.PurgeOldBackups(logger);
+            }
+            catch (ProgramDataNotWritableException exception)
+            {
+                logger.Warning("Could not purge old backups.");
+                logger.Debug(exception.ToString());
             }
 
             string pathToBackupDirectory = "";
