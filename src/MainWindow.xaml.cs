@@ -47,7 +47,7 @@ namespace TaystJkUpdater
                 catch (TaskCanceledException exception)
                 {
                     // Typically happens when the user clicks the "Skip" button
-                    logger.Debug("Cancelled " + exception.Task);
+                    logger.Debug(exception.ToString());
                 }
                 catch (ProgramDataNotReadableException exception)
                 {

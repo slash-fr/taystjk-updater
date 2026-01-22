@@ -71,9 +71,9 @@ namespace TaystJkUpdater.ProgramData
             }
             catch (Exception exception)
             {
-                if (exception is FileNotFoundException || exception is DirectoryNotFoundException ||
-                    exception is SecurityException || exception is UnauthorizedAccessException ||
-                    exception is PathTooLongException || exception is IOException)
+                if (exception is FileNotFoundException || exception is DirectoryNotFoundException  ||
+                    exception is SecurityException     || exception is UnauthorizedAccessException ||
+                    exception is PathTooLongException  || exception is IOException                 )
                 {
                     throw new ProgramDataNotReadableException(exception);
                 }
@@ -98,7 +98,7 @@ namespace TaystJkUpdater.ProgramData
                 }
                 catch (Exception exception)
                 {
-                    if (exception is DirectoryNotFoundException || exception is IOException ||
+                    if (exception is DirectoryNotFoundException  || exception is IOException         ||
                         exception is UnauthorizedAccessException || exception is PathTooLongException)
                     {
                         throw new ProgramDataNotWritableException(exception);
@@ -132,9 +132,9 @@ namespace TaystJkUpdater.ProgramData
             }
             catch (Exception exception)
             {
-                if (exception is FileNotFoundException || exception is DirectoryNotFoundException ||
-                    exception is SecurityException || exception is UnauthorizedAccessException ||
-                    exception is PathTooLongException || exception is IOException)
+                if (exception is FileNotFoundException || exception is DirectoryNotFoundException  ||
+                    exception is SecurityException     || exception is UnauthorizedAccessException ||
+                    exception is PathTooLongException  || exception is IOException                 )
                 {
                     throw new ProgramDataNotReadableException(exception);
                 }

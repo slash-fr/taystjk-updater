@@ -40,6 +40,7 @@ namespace TaystJkUpdater.Updater
         private string pathToTaystJkExe = "";
         private string taystJkArchitecture = "";
         private string pathToDownloadedFile = "";
+        private string pathToExtractedArchive = "";
 
         public TaystJkUpdaterLogic(Logger logger)
         {
@@ -68,7 +69,7 @@ namespace TaystJkUpdater.Updater
             if (String.IsNullOrEmpty(pathToTaystJkExe))
             {
                 throw new InvalidOperationException(
-                    "CheckForUpdates() was called too soon (missing: pathToTaystJkExe)"
+                    "CheckForUpdates() was called too soon (missing: pathToTaystJkExe)."
                 );
             }
 
@@ -203,19 +204,19 @@ namespace TaystJkUpdater.Updater
                 );
             }
 
-            string pathToDownloadDirectory = ProgramDataHelper.CreateNewDownloadSubdirectory();
-            string downloadFilename = "TaystJK-windows-" + taystJkArchitecture + ".zip";
-            pathToDownloadedFile = pathToDownloadDirectory + Path.DirectorySeparatorChar + downloadFilename;
-
-            string downloadUri = "http://localhost/" + downloadFilename;
-            //string downloadUri = "https://github.com/taysta/TaystJK/releases/download/latest/" + downloadFilename;
-
-            logger.Debug("Downloading: " + downloadUri);
-
             FileStream destinationFilestream = null;
 
             try
             {
+                string pathToDownloadDirectory = ProgramDataHelper.CreateNewDownloadSubdirectory();
+                string downloadFilename = "TaystJK-windows-" + taystJkArchitecture + ".zip";
+                pathToDownloadedFile = pathToDownloadDirectory + Path.DirectorySeparatorChar + downloadFilename;
+
+                string downloadUri = "http://localhost/" + downloadFilename;
+                //string downloadUri = "https://github.com/taysta/TaystJK/releases/download/latest/" + downloadFilename;
+
+                logger.Debug("Downloading: " + downloadUri);
+
                 destinationFilestream = new FileStream(
                     pathToDownloadedFile,
                     FileMode.CreateNew,
@@ -223,32 +224,31 @@ namespace TaystJkUpdater.Updater
                     FileShare.None
                 );
 
-                try
-                {
-                    await httpClient.DownloadAsync(downloadUri, destinationFilestream, progress, cancellationToken);
-                }
-                catch (HttpRequestException exception)
+                await httpClient.DownloadAsync(downloadUri, destinationFilestream, progress, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                if (exception is HttpRequestException  || exception is ProgramDataNotWritableException ||
+                    exception is FileNotFoundException || exception is DirectoryNotFoundException      ||
+                    exception is SecurityException     || exception is UnauthorizedAccessException     ||
+                    exception is PathTooLongException  || exception is IOException                     )
                 {
                     logger.Error("An error occurred while downloading the latest TaystJK release.", exception);
                     return false;
                 }
-            }
-            catch (UnauthorizedAccessException exception)
-            {
-                // File/folder not writable
-                throw new ProgramDataNotWritableException(exception);
-            }
-            catch (SecurityException exception)
-            {
-                // File/folder not writable
-                throw new ProgramDataNotWritableException(exception);
+
+                // Unexpected exception, just rethrow it:
+                throw exception;
             }
             finally
             {
                 destinationFilestream?.Dispose();
             }
 
-            logger.Info("Downloaded the latest TaystJK release successfully."); // TODO: Be more specific
+            logger.Info(
+                "Successfully downloaded the latest TaystJK release to: " + '"' + pathToDownloadedFile + '"' + "."
+            );
+
             return true;
         }
 
@@ -267,7 +267,7 @@ namespace TaystJkUpdater.Updater
 
             logger.Debug("Unpacking: " + '"' + pathToDownloadedFile + '"');
 
-            string pathToExtractedArchive = Path.GetDirectoryName(pathToDownloadedFile) 
+            pathToExtractedArchive = Path.GetDirectoryName(pathToDownloadedFile) 
                 + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(pathToDownloadedFile);
 
             try
@@ -276,9 +276,9 @@ namespace TaystJkUpdater.Updater
             }
             catch (Exception exception)
             {
-                if (exception is FileNotFoundException || exception is DirectoryNotFoundException ||
-                    exception is SecurityException || exception is UnauthorizedAccessException ||
-                    exception is PathTooLongException || exception is IOException)
+                if (exception is FileNotFoundException || exception is DirectoryNotFoundException  ||
+                    exception is SecurityException     || exception is UnauthorizedAccessException ||
+                    exception is PathTooLongException  || exception is IOException                 )
                 {
                     logger.Error("An error occurred while unpacking the latest TaystJK release.", exception);
                     return false;
@@ -288,7 +288,10 @@ namespace TaystJkUpdater.Updater
                 throw exception;
             }
 
-            logger.Info("Unpacked the new TaystJK release successfully.");
+            logger.Info(
+                "Successfully unpacked the new TaystJK release to: " + '"' + pathToExtractedArchive + '"' + "."
+            );
+
             return true;
         }
 
@@ -296,23 +299,57 @@ namespace TaystJkUpdater.Updater
         /// Backup files that would get overwritten by the update
         /// </summary>
         /// <returns>true if the files were backed up successfully, false otherwise</returns>
-        public async Task<bool> BackupCurrentFiles(CancellationToken cancellationToken)
+        public bool BackupCurrentFiles(CancellationToken cancellationToken)
         {
-            logger.Debug("Backing up current TaystJK Files...");
-            // TODO: Log the exact destination folder
-
-            // TODO: actually attempt to backup files that would get overwritten by the update
-            await Task.Delay(1000);
-
-            switch (1)
+            if (String.IsNullOrEmpty(pathToTaystJkExe))
             {
-                case 0:
-                    logger.Error("An error occurred while backing up current TaystJK files."); // TODO: Be more specific
-                    return false;
-                default:
-                    logger.Info("Backed up current TaystJK files successfully."); // TODO: Be more specific
-                    return true;
+                throw new InvalidOperationException(
+                    "BackupCurrentFiles() was called too soon (missing: pathToTaystJkExe)."
+                );
             }
+
+            if (String.IsNullOrEmpty(pathToExtractedArchive))
+            {
+                throw new InvalidOperationException(
+                    "BackupCurrentFiles() was called too soon (missing: pathToExtractedArchive)."
+                );
+            }
+
+            string pathToBackupDirectory = "";
+
+            try
+            {
+                pathToBackupDirectory = ProgramDataHelper.CreateNewBackupSubdirectory();
+                logger.Debug("Backing up current TaystJK files to: " + '"' + pathToBackupDirectory + '"');
+
+                DirectoryInfo sourceDirectory = new DirectoryInfo(pathToExtractedArchive);
+                DirectoryInfo destinationDirectory = new DirectoryInfo(Path.GetDirectoryName(pathToTaystJkExe));
+                DirectoryInfo backupDirectory = new DirectoryInfo(pathToBackupDirectory);
+
+                BackupExistingFilesRecursively(
+                    sourceDirectory,
+                    destinationDirectory,
+                    backupDirectory,
+                    cancellationToken
+                );
+            }
+            catch (Exception exception)
+            {
+                if (exception is IOException           || exception is ProgramDataNotWritableException ||
+                    exception is FileNotFoundException || exception is DirectoryNotFoundException      ||
+                    exception is SecurityException     || exception is UnauthorizedAccessException     ||
+                    exception is PathTooLongException  )
+                {
+                    logger.Error("An error occurred while backing up current TaystJK files.", exception);
+                    return false;
+                }
+
+                // Unexpected exception, just rethrow it:
+                throw exception;
+            }
+
+            logger.Info("Successfully backed up current TaystJK files to: " + '"' + pathToBackupDirectory + '"' + ".");
+            return true;
         }
 
         /// <summary>
@@ -520,6 +557,93 @@ namespace TaystJkUpdater.Updater
                 );
                 // Other than that, fail silently. (This whole method is a dirty hack, anyway...)
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Recursively backs up files from the destination directory to the backup directory,
+        /// if they exist in the source directory.
+        /// </summary>
+        /// <param name="sourceDirectory">Directory with the new TaystJK files</param>
+        /// <param name="destinationDirectory">Directory with the current TaystJK files</param>
+        /// <param name="backupDirectory">Backup directory (e.g. in ProgramData)</param>
+        /// <exception cref="OperationCanceledException"></exception>
+        /// <exception cref="IOException"></exception>
+        /// <exception cref="DirectoryNotFoundException"></exception>
+        /// <exception cref="FileNotFoundException"></exception>
+        /// <exception cref="SecurityException"></exception>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        /// <exception cref="PathTooLongException"></exception>
+        private void BackupExistingFilesRecursively(
+            DirectoryInfo sourceDirectory,
+            DirectoryInfo destinationDirectory,
+            DirectoryInfo backupDirectory,
+            CancellationToken cancellationToken)
+        {
+            foreach (DirectoryInfo sourceSubdir in sourceDirectory.EnumerateDirectories())
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    throw new TaskCanceledException("Cancelled TaystJK backup");
+                }
+
+                string relativePathToSubdir = sourceSubdir.FullName;
+                if (relativePathToSubdir.StartsWith(pathToExtractedArchive + Path.DirectorySeparatorChar))
+                {
+                    relativePathToSubdir = relativePathToSubdir.Substring(pathToExtractedArchive.Length + 1);
+                }
+
+                DirectoryInfo destinationSubdir = new DirectoryInfo(
+                    destinationDirectory.FullName + Path.DirectorySeparatorChar + sourceSubdir.Name
+                );
+
+                if (!destinationSubdir.Exists)
+                {
+                    logger.Debug("Folder does not exist yet:  " + relativePathToSubdir);
+                    continue;
+                }
+
+                logger.Debug("Backing up existing folder: " + relativePathToSubdir);
+
+                DirectoryInfo backupSubdir = new DirectoryInfo(
+                    backupDirectory.FullName + Path.DirectorySeparatorChar + sourceSubdir.Name
+                );
+
+                backupSubdir.Create();
+
+                // Recursive backup:
+                BackupExistingFilesRecursively(sourceSubdir, destinationSubdir, backupSubdir, cancellationToken);
+            }
+
+            foreach (FileInfo sourceFile in sourceDirectory.EnumerateFiles())
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    throw new TaskCanceledException("Cancelled TaystJK backup");
+                }
+
+                string relativePathToFile = sourceFile.FullName;
+                if (relativePathToFile.StartsWith(pathToExtractedArchive + Path.DirectorySeparatorChar))
+                {
+                    relativePathToFile = relativePathToFile.Substring(pathToExtractedArchive.Length + 1);
+                }
+
+                FileInfo destinationFile = new FileInfo(
+                    destinationDirectory.FullName + Path.DirectorySeparatorChar + sourceFile.Name
+                );
+
+                if (!destinationFile.Exists)
+                {
+                    logger.Debug("File does not exist yet:    " + relativePathToFile);
+                    continue;
+                }
+
+                logger.Debug("Backing up existing file:   " + relativePathToFile);
+
+                File.Copy(
+                    sourceFile.FullName,
+                    backupDirectory.FullName + Path.DirectorySeparatorChar + sourceFile.Name
+                );
             }
         }
     }
