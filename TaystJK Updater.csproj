@@ -76,7 +76,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="src\GitHub\GithubApiClient.cs" />
+    <Compile Include="src\Extensions\HttpClientExtensions.cs" />
+    <Compile Include="src\Extensions\StreamExtensions.cs" />
+    <Compile Include="src\GitHub\GithubApiHelper.cs" />
     <Compile Include="src\GitHub\GithubApiException.cs" />
     <Compile Include="src\GitHub\ReleaseInfo.cs" />
     <Compile Include="src\GitHub\TooManyRequestsException.cs" />
@@ -84,6 +86,7 @@
       <DependentUpon>SuccessIcon.xaml</DependentUpon>
     </Compile>
     <Compile Include="src\ProgramData\PersistentState.cs" />
+    <Compile Include="src\ProgramData\ProgramDataHelper.cs" />
     <Compile Include="src\ProgramData\ProgramDataNotReadableException.cs" />
     <Compile Include="src\ProgramData\ProgramDataNotWritableException.cs" />
     <Compile Include="src\Logging\UnloggableErrorException.cs" />

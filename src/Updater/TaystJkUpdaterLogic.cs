@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Security;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using TaystJkUpdater.Extensions;
 using TaystJkUpdater.GitHub;
 using TaystJkUpdater.Logging;
 using TaystJkUpdater.ProgramData;
@@ -35,6 +38,7 @@ namespace TaystJkUpdater.Updater
         private string commandLineArgsAsString = "";
         private string pathToTaystJkExe = "";
         private string taystJkArchitecture = "";
+        private string pathToDownloadedFile = "";
 
         public TaystJkUpdaterLogic(Logger logger)
         {
@@ -51,12 +55,12 @@ namespace TaystJkUpdater.Updater
         }
 
         /// <summary>
-        /// Check whether an update is available for TaystJK
+        /// Checks whether an update is available for TaystJK
         /// </summary>
-        /// <param name="githubApiClient">GitHub API Client (dependency to inject)</param>
+        /// <param name="httpClient">HTTP client to use for the API request</param>
         /// <param name="persistentState">Updater state (for reading and writing)</param>
         public async Task<UpdateCheckResult> CheckForUpdates(
-            GithubApiClient githubApiClient,
+            HttpClient httpClient,
             CancellationToken cancellationToken,
             PersistentState persistentState)
         {
@@ -85,10 +89,13 @@ namespace TaystJkUpdater.Updater
             }
 
             ReleaseInfo latestRelease;
+            Uri requestUri = new Uri("http://localhost/latest.php"); // TODO
+            //Uri requestUri = new Uri("https://api.github.com/repos/taysta/TaystJK/releases/tags/latest");
+            logger.Debug("GitHub API request: " + requestUri);
 
             try
             {
-                latestRelease = await githubApiClient.GetLatestTaystJkReleaseInfo(cancellationToken);
+                latestRelease = await GithubApiHelper.GetReleaseInfo(httpClient, requestUri, cancellationToken);
             }
             catch (TooManyRequestsException exception)
             {
@@ -178,38 +185,70 @@ namespace TaystJkUpdater.Updater
         }
 
         /// <summary>
-        /// Download the lastest version of TaystJK
+        /// Downloads the lastest version of TaystJK
         /// </summary>
+        /// <param name="httpClient">HTTP client to use for the download request</param>
         /// <param name="progress">Progress report, from 0 to 100 (percent)</param>
         /// <returns>true if the update was downloaded successfully, false otherwise</returns>
-        public async Task<bool> DownloadLatestRelease(CancellationToken cancellationToken, IProgress<int> progress)
+        public async Task<bool> DownloadLatestRelease(
+            HttpClient httpClient,
+            CancellationToken cancellationToken,
+            IProgress<int> progress)
         {
-            logger.Debug("Downloading the latest TaystJK release...");
-            // TODO: Log the exact URL
-
-            // TODO: actually attempt to download the update
-            await Task.Delay(100);
-
-            switch (1)
+            if (String.IsNullOrEmpty(taystJkArchitecture))
             {
-                case 0:
-                    // TODO: Be more specific
-                    logger.Error("An error occurred while downloading the latest TaystJK release.");
-                    return false;
-                default:
-                    for (int i = 0; i < 100; i++)
-                    {
-                        if (cancellationToken.IsCancellationRequested)
-                        {
-                            logger.Info("Cancelled TaystJK download at " + i + "%");
-                            return false;
-                        }
-                        progress?.Report(i);
-                        await Task.Delay(50);
-                    }
-                    logger.Info("Downloaded the latest TaystJK release successfully."); // TODO: Be more specific
-                    return true;
+                throw new InvalidOperationException(
+                    "DownloadLatestRelease() was called too soon (missing: taystJkArchitecture)."
+                );
             }
+
+            string pathToDownloadDirectory = ProgramDataHelper.CreateNewDownloadSubdirectory();
+            string downloadFilename = "TaystJK-windows-" + taystJkArchitecture + ".zip";
+            pathToDownloadedFile = pathToDownloadDirectory + Path.DirectorySeparatorChar + downloadFilename;
+
+            string downloadUri = "http://localhost/" + downloadFilename;
+            //string downloadUri = "https://github.com/taysta/TaystJK/releases/download/latest/" + downloadFilename;
+
+            logger.Debug("Downloading: " + downloadUri);
+
+            FileStream destinationFilestream = null;
+
+            try
+            {
+                destinationFilestream = new FileStream(
+                    pathToDownloadedFile,
+                    FileMode.CreateNew,
+                    FileAccess.Write,
+                    FileShare.None
+                );
+
+                try
+                {
+                    await httpClient.DownloadAsync(downloadUri, destinationFilestream, progress, cancellationToken);
+                }
+                catch (HttpRequestException exception)
+                {
+                    logger.Error("An error occurred while downloading the latest TaystJK release.", exception);
+                    return false;
+                }
+            }
+            catch (UnauthorizedAccessException exception)
+            {
+                // File/folder not writable
+                throw new ProgramDataNotWritableException(exception);
+            }
+            catch (SecurityException exception)
+            {
+                // File/folder not writable
+                throw new ProgramDataNotWritableException(exception);
+            }
+            finally
+            {
+                destinationFilestream?.Dispose();
+            }
+
+            logger.Info("Downloaded the latest TaystJK release successfully."); // TODO: Be more specific
+            return true;
         }
 
         /// <summary>

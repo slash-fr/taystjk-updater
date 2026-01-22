@@ -1,4 +1,5 @@
-﻿using LightJson.Serialization;
+﻿using LightJson;
+using LightJson.Serialization;
 using System;
 using System.Net;
 using System.Net.Http;
@@ -7,28 +8,43 @@ using System.Threading.Tasks;
 
 namespace TaystJkUpdater.GitHub
 {
-    internal class GithubApiClient
+    internal static class GithubApiHelper
     {
-        private readonly HttpClient httpClient;
-
-        public GithubApiClient()
+        /// <summary>
+        /// Gets info about the specified release, from the GitHub API. Does not download any assets.
+        /// </summary>
+        /// <param name="httpClient">HTTP Client to use for the request</param>
+        /// <param name="requestUri">URI pointing to a GitHub API endpoint that returns info about a release.</param>
+        /// <exception cref="GithubApiException"></exception>
+        /// <exception cref="TooManyRequestsException"></exception>
+        public static async Task<ReleaseInfo> GetReleaseInfo(
+            HttpClient httpClient,
+            Uri requestUri,
+            CancellationToken cancellationToken)
         {
-            httpClient = new HttpClient();
+            SetApiHeaders(httpClient);
+            HttpResponseMessage response = await GetAsync(httpClient, requestUri, cancellationToken);
+            string responseAsString = await response.Content.ReadAsStringAsync();
+            JsonValue parsedResponse = ParseResponse(requestUri, responseAsString);
+
+            return new ReleaseInfo(parsedResponse["created_at"], parsedResponse["target_commitish"]);
+        }
+
+        private static void SetApiHeaders(HttpClient httpClient)
+        {
+            httpClient.DefaultRequestHeaders.Clear();
             httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github+json");
             httpClient.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
             httpClient.DefaultRequestHeaders.Add("User-Agent", "TaystJK Updater");
         }
 
-        /// <summary>
-        /// Gets info about the latest TaystJK release, from the GitHub API. Does not download any assets.
-        /// </summary>
         /// <exception cref="GithubApiException"></exception>
         /// <exception cref="TooManyRequestsException"></exception>
-        public async Task<ReleaseInfo> GetLatestTaystJkReleaseInfo(CancellationToken cancellationToken)
+        private static async Task<HttpResponseMessage> GetAsync(
+            HttpClient httpClient,
+            Uri requestUri,
+            CancellationToken cancellationToken)
         {
-            Uri requestUri = new Uri("http://localhost/latest.php");
-            // TODO: "https://api.github.com/repos/taysta/TaystJK/releases/tags/latest"
-
             HttpResponseMessage response;
 
             try
@@ -53,12 +69,19 @@ namespace TaystJkUpdater.GitHub
                 );
             }
 
-            LightJson.JsonValue parsedResponse;
+            return response;
+        }
 
-            string responseAsString = await response.Content.ReadAsStringAsync();
+        /// <param name="requestUri">Request URI (for informative purposes)</param>
+        /// <param name="responseAsString">A string (hopefully) containing JSON</param>
+        /// <exception cref="GithubApiException"></exception>
+        private static JsonValue ParseResponse(Uri requestUri, string responseAsString)
+        {
+            JsonValue parsedResponse;
+
             try
             {
-                parsedResponse = LightJson.JsonValue.Parse(responseAsString);
+                parsedResponse = JsonValue.Parse(responseAsString);
             }
             catch (JsonParseException exception)
             {
@@ -81,7 +104,7 @@ namespace TaystJkUpdater.GitHub
                 );
             }
 
-            return new ReleaseInfo(parsedResponse["created_at"], parsedResponse["target_commitish"]);
+            return parsedResponse;
         }
     }
 }

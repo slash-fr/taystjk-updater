@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using TaystJkUpdater.GitHub;
 using TaystJkUpdater.Logging;
 using TaystJkUpdater.ProgramData;
 using TaystJkUpdater.Updater;
@@ -16,6 +16,7 @@ namespace TaystJkUpdater
     {
         private Logger logger;
         private UpdateLock updateLock;
+        private HttpClient httpClient;
         private TaystJkUpdaterLogic taystJkUpdater;
         private readonly CancellationTokenSource cancellationTokenSource;
 
@@ -69,6 +70,7 @@ namespace TaystJkUpdater
                 }
                 finally
                 {
+                    httpClient?.Dispose();
                     updateLock?.Dispose();
                 }
             }
@@ -95,9 +97,6 @@ namespace TaystJkUpdater
 
         private async Task PerformUpdate(Logger logger)
         {
-            GithubApiClient githubApiClient = new GithubApiClient();
-            PersistentState persistentState = new PersistentState();
-
             taystJkUpdater = new TaystJkUpdaterLogic(logger);
 
             if (!await Task.Run(taystJkUpdater.InitializeUpdater))
@@ -108,13 +107,15 @@ namespace TaystJkUpdater
 
             await AcquireLock(logger);
 
+            PersistentState persistentState = new PersistentState();
             await Task.Run(persistentState.Load);
+            httpClient = new HttpClient();
 
             StatusLabel.Content = "Checking for TaystJK updates...";
             SkipButton.Visibility = Visibility.Visible;
 
             UpdateCheckResult updateCheckResult = await Task.Run(
-                () => taystJkUpdater.CheckForUpdates(githubApiClient, cancellationTokenSource.Token, persistentState)
+                () => taystJkUpdater.CheckForUpdates(httpClient, cancellationTokenSource.Token, persistentState)
             );
 
             if (cancellationTokenSource.IsCancellationRequested)
@@ -150,7 +151,7 @@ namespace TaystJkUpdater
             };
 
             bool downloadedSuccessfully = await Task.Run(
-                () => taystJkUpdater.DownloadLatestRelease(cancellationTokenSource.Token, progress)
+                () => taystJkUpdater.DownloadLatestRelease(httpClient, cancellationTokenSource.Token, progress)
             );
 
             if (!downloadedSuccessfully)
