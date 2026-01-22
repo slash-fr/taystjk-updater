@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Security;
@@ -252,26 +253,43 @@ namespace TaystJkUpdater.Updater
         }
 
         /// <summary>
-        /// Unzip the new version
+        /// Unzips the new version
         /// </summary>
         /// <returns>true if the new version was unpacked successfully, false otherwise</returns>
-        public async Task<bool> UnpackLatestRelease()
+        public bool UnpackLatestRelease()
         {
-            logger.Debug("Unpacking the latest TaystJK release...");
-            // TODO: Log the exact path to the ZIP file
-
-            // TODO: actually attempt to unzip the new version
-            await Task.Delay(1000);
-
-            switch (1)
+            if (String.IsNullOrEmpty(pathToDownloadedFile))
             {
-                case 0:
-                    logger.Error("An error occurred while unpacking the latest TaystJK release."); // TODO: Be more specific
-                    return false;
-                default:
-                    logger.Info("Unpacked the new TaystJK release successfully."); // TODO: Be more specific
-                    return true;
+                throw new InvalidOperationException(
+                    "UnpackLatestRelease() was called too soon (missing: pathToDownloadedFile)."
+                );
             }
+
+            logger.Debug("Unpacking: " + '"' + pathToDownloadedFile + '"');
+
+            string pathToExtractedArchive = Path.GetDirectoryName(pathToDownloadedFile) 
+                + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(pathToDownloadedFile);
+
+            try
+            {
+                ZipFile.ExtractToDirectory(pathToDownloadedFile, pathToExtractedArchive);
+            }
+            catch (Exception exception)
+            {
+                if (exception is FileNotFoundException || exception is DirectoryNotFoundException ||
+                    exception is SecurityException || exception is UnauthorizedAccessException ||
+                    exception is PathTooLongException || exception is IOException)
+                {
+                    logger.Error("An error occurred while unpacking the latest TaystJK release.", exception);
+                    return false;
+                }
+
+                // Unexpected exception, just rethrow it:
+                throw exception;
+            }
+
+            logger.Info("Unpacked the new TaystJK release successfully.");
+            return true;
         }
 
         /// <summary>
