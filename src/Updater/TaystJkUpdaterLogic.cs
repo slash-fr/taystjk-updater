@@ -696,7 +696,7 @@ namespace TaystJkUpdater.Updater
                 logger.Debug("Backing up existing file:   " + relativePathToFile);
 
                 File.Copy(
-                    sourceFile.FullName,
+                    destinationFile.FullName,
                     backupDirectory.FullName + Path.DirectorySeparatorChar + sourceFile.Name
                 );
             }
