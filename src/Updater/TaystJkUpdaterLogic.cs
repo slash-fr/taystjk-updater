@@ -204,6 +204,15 @@ namespace TaystJkUpdater.Updater
                 );
             }
 
+            try
+            {
+                ProgramDataHelper.PurgeAllDownloads();
+            }
+            catch (ProgramDataNotWritableException)
+            {
+                logger.Warning("Could not purge old downloads.");
+            }
+
             FileStream destinationFilestream = null;
 
             try
@@ -375,6 +384,15 @@ namespace TaystJkUpdater.Updater
 
                     persistentState.LastCheckedByPath[pathToTaystJkExe] = DateTime.Now;
                     persistentState.Save();
+
+                    try
+                    {
+                        ProgramDataHelper.PurgeAllDownloads();
+                    }
+                    catch (ProgramDataNotWritableException)
+                    {
+                        logger.Warning("Could not purge downloads.");
+                    }
 
                     return true;
             }

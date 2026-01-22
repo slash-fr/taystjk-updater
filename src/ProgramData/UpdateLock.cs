@@ -58,15 +58,17 @@ namespace TaystJkUpdater.ProgramData
                 );
                 File.SetAttributes(pathToLockFile, FileAttributes.Hidden);
             }
-            catch (UnauthorizedAccessException exception)
+            catch (Exception exception)
             {
-                // File/folder not writable
-                throw new ProgramDataNotWritableException(exception);
-            }
-            catch (SecurityException exception)
-            {
-                // File/folder not writable
-                throw new ProgramDataNotWritableException(exception);
+                if (exception is SecurityException || exception is UnauthorizedAccessException ||
+                    exception is IOException       )
+                {
+                    // File/folder not writable
+                    throw new ProgramDataNotWritableException(exception);
+                }
+
+                // Unexpected exception, just rethrow it:
+                throw exception;
             }
         }
 

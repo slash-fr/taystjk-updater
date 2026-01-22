@@ -136,7 +136,7 @@ namespace TaystJkUpdater.ProgramData
                     exception is SecurityException     || exception is UnauthorizedAccessException ||
                     exception is PathTooLongException  || exception is IOException                 )
                 {
-                    throw new ProgramDataNotReadableException(exception);
+                    throw new ProgramDataNotWritableException(exception);
                 }
 
                 // Unexpected exception, rethrow without encapsulating:

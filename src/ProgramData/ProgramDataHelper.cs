@@ -8,6 +8,38 @@ namespace TaystJkUpdater.ProgramData
     internal static class ProgramDataHelper
     {
         /// <summary>
+        /// Deletes ALL downloads
+        /// </summary>
+        /// <exception cref="ProgramDataNotWritableException"></exception>
+        public static void PurgeAllDownloads()
+        {
+            string pathToDownloadDirectory = AppEnvironment.PathToUpdaterProgramData
+                + Path.DirectorySeparatorChar + "Downloads";
+
+            if (!Directory.Exists(pathToDownloadDirectory))
+            {
+                return;
+            }
+
+            try
+            {
+                // Nuke it from orbit. It's the only way to be sure.
+                Directory.Delete(pathToDownloadDirectory, recursive: true);
+            }
+            catch (Exception exception)
+            {
+                if (exception is IOException          || exception is UnauthorizedAccessException ||
+                    exception is PathTooLongException || exception is DirectoryNotFoundException  )
+                {
+                    throw new ProgramDataNotWritableException(exception);
+                }
+
+                // Unexpected exception, just rethrow it:
+                throw exception;
+            }
+        }
+
+        /// <summary>
         /// Creates a unique subdirectory in ProgramData, to store a new download.
         /// </summary>
         /// <returns>
@@ -19,8 +51,6 @@ namespace TaystJkUpdater.ProgramData
         {
             return CreateTimestampedSubdirectory("Downloads");
         }
-
-        // TODO: Purge old download subdirs?
 
         /// <summary>
         /// Creates a unique subdirectory in ProgramData, to store a new backup.
@@ -56,15 +86,16 @@ namespace TaystJkUpdater.ProgramData
             {
                 Directory.CreateDirectory(pathToNewSubdirectory);
             }
-            catch (UnauthorizedAccessException exception)
+            catch (Exception exception)
             {
-                // File/folder not writable
-                throw new ProgramDataNotWritableException(exception);
-            }
-            catch (SecurityException exception)
-            {
-                // File/folder not writable
-                throw new ProgramDataNotWritableException(exception);
+                if (exception is IOException           || exception is UnauthorizedAccessException ||
+                    exception is PathTooLongException  || exception is DirectoryNotFoundException  )
+                {
+                    throw new ProgramDataNotWritableException(exception);
+                }
+
+                // Unexpected exception, just rethrow it:
+                throw exception;
             }
 
             return pathToNewSubdirectory;
