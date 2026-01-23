@@ -92,8 +92,7 @@ namespace TaystJkUpdater.Updater
             }
 
             ReleaseInfo latestRelease;
-            Uri requestUri = new Uri("http://localhost/latest.php"); // TODO
-            //Uri requestUri = new Uri("https://api.github.com/repos/taysta/TaystJK/releases/tags/latest");
+            Uri requestUri = new Uri(AppEnvironment.LatestTaystJkReleaseApiUrl);
             _logger.Debug("GitHub API request: " + requestUri);
 
             try
@@ -223,8 +222,7 @@ namespace TaystJkUpdater.Updater
                 string downloadFilename = "TaystJK-windows-" + _taystJkArchitecture + ".zip";
                 _pathToDownloadedFile = pathToDownloadDirectory + Path.DirectorySeparatorChar + downloadFilename;
 
-                string downloadUri = "http://localhost/" + downloadFilename;
-                //string downloadUri = "https://github.com/taysta/TaystJK/releases/download/latest/" + downloadFilename;
+                string downloadUri = AppEnvironment.LatestTaystJkDownloadUrl + downloadFilename;
 
                 _logger.Debug("Downloading: " + downloadUri);
 
