@@ -39,6 +39,7 @@ namespace TaystJkUpdater.Updater
         private string commandLineArgsAsString = "";
         private string pathToTaystJkExe = "";
         private string taystJkArchitecture = "";
+        private DateTime? latestReleaseCreatedAt = null;
         private string pathToDownloadedFile = "";
         private string pathToExtractedArchive = "";
 
@@ -98,6 +99,7 @@ namespace TaystJkUpdater.Updater
             try
             {
                 latestRelease = await GithubApiHelper.GetReleaseInfo(httpClient, requestUri, cancellationToken);
+                latestReleaseCreatedAt = latestRelease.CreatedAt;
             }
             catch (TooManyRequestsException exception)
             {
@@ -159,7 +161,6 @@ namespace TaystJkUpdater.Updater
             }
 
             // Otherwise, use the date
-            // TODO: Which one ? Compare LastWriteTime to published_at ? Or CreationTime to created_at ?
             DateTime localCreationTime = new FileInfo(pathToTaystJkExe).CreationTime;
 
             if (localCreationTime < latestRelease.CreatedAt)
@@ -392,15 +393,42 @@ namespace TaystJkUpdater.Updater
                 );
             }
 
+            if (latestReleaseCreatedAt is null)
+            {
+                throw new InvalidOperationException(
+                    "CopyNewFiles() was called too soon (missing: latestReleaseCreatedAt)."
+                );
+            }
+
             logger.Debug("Copying files from the new TaystJK version...");
 
             string pathToTaystJkDirectory = Path.GetDirectoryName(pathToTaystJkExe);
             
             try
             {
+                string pathToNewTaystJkExe = pathToExtractedArchive
+                    + Path.DirectorySeparatorChar + Path.GetFileName(pathToTaystJkExe);
+
+                if (!File.Exists(pathToNewTaystJkExe))
+                {
+                    logger.Error(
+                        "Could not find the new executable file. "
+                        + "Was expecting: " + '"' + pathToNewTaystJkExe + '"'
+                    );
+                    return false;
+                }
+
                 DirectoryInfo sourceDirectory = new DirectoryInfo(pathToExtractedArchive);
                 DirectoryInfo destinationDirectory = new DirectoryInfo(pathToTaystJkDirectory);
+
+                // Copy all files EXCEPT the main exe:
                 CopyNewFilesRecursively(sourceDirectory, destinationDirectory);
+
+                // Copy the main exe AFTER the others:
+                logger.Debug("Copying:  " + Path.GetFileName(pathToNewTaystJkExe));
+                File.Copy(pathToNewTaystJkExe, pathToTaystJkExe, overwrite: true);
+                FixFileTimestamps(pathToTaystJkExe);
+                // Because the main exe is used to determine what version is currently installed.
             }
             catch (Exception exception)
             {
@@ -416,7 +444,7 @@ namespace TaystJkUpdater.Updater
                 throw exception;
             }
 
-            logger.Info("Applied TaystJK update successfully."); // TODO: Be more specific
+            logger.Info("Applied TaystJK update successfully.");
             DetectCurrentTaystJkCommitHash();
 
             persistentState.LastCheckedByPath[pathToTaystJkExe] = DateTime.Now;
@@ -703,7 +731,7 @@ namespace TaystJkUpdater.Updater
         }
 
         /// <summary>
-        /// Copies files recursively, and overwrites if necessary.
+        /// Copies files recursively - EXCEPT THE MAIN EXE - and overwrites if necessary.
         /// </summary>
         /// <param name="sourceDirectory">Directory with the new TaystJK files</param>
         /// <param name="destinationDirectory">Directory with the old TaystJK files</param>
@@ -744,19 +772,51 @@ namespace TaystJkUpdater.Updater
 
             foreach (FileInfo sourceFile in sourceDirectory.EnumerateFiles())
             {
+                string pathToDestinationFile = destinationDirectory.FullName
+                    + Path.DirectorySeparatorChar + sourceFile.Name;
+
                 string relativePathToFile = sourceFile.FullName;
                 if (relativePathToFile.StartsWith(pathToExtractedArchive + Path.DirectorySeparatorChar))
                 {
                     relativePathToFile = relativePathToFile.Substring(pathToExtractedArchive.Length + 1);
                 }
 
+                if (pathToDestinationFile == pathToTaystJkExe)
+                {
+                    // Update the main exe AFTER all of the other files, as it is used to detect the current version.
+                    logger.Debug("Skipping: " + relativePathToFile + " (will handle it last)");
+                    continue;
+                }
+
                 logger.Debug("Copying:  " + relativePathToFile);
 
-                File.Copy(
-                    sourceFile.FullName,
-                    destinationDirectory.FullName + Path.DirectorySeparatorChar + sourceFile.Name,
-                    overwrite: true
-                );
+                File.Copy(sourceFile.FullName, pathToDestinationFile, overwrite: true);
+
+                FixFileTimestamps(pathToDestinationFile);
+            }
+        }
+
+        /// <summary>
+        /// Set the file timestamps to the creation date/time of the latest release.
+        /// </summary>
+        private void FixFileTimestamps(string pathToFile)
+        {
+            try
+            {
+                File.SetCreationTime(pathToFile, (DateTime)latestReleaseCreatedAt);
+                File.SetLastWriteTime(pathToFile, (DateTime)latestReleaseCreatedAt);
+            }
+            catch (Exception exception)
+            {
+                if (exception is FileNotFoundException || exception is UnauthorizedAccessException ||
+                    exception is PathTooLongException  || exception is IOException                 )
+                {
+                    logger.Warning("Could not fix the file timestamp.");
+                    logger.Debug(exception.ToString());
+                }
+
+                // Unexpected exception, just rethrow it:
+                throw exception;
             }
         }
     }
