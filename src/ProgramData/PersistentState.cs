@@ -21,14 +21,14 @@ namespace TaystJkUpdater.ProgramData
         /// </summary>
         public Dictionary<string, DateTime> LastCheckedByPath;
 
-        private readonly string pathToJsonFile;
+        private readonly string _pathToJsonFile;
 
         public PersistentState()
         {
             GithubThrottledUntil = null;
             LastCheckedByPath = new Dictionary<string, DateTime>();
 
-            pathToJsonFile = AppEnvironment.PathToUpdaterProgramData + Path.DirectorySeparatorChar + "state.json";
+            _pathToJsonFile = AppEnvironment.PathToUpdaterProgramData + Path.DirectorySeparatorChar + "state.json";
         }
 
 
@@ -38,14 +38,14 @@ namespace TaystJkUpdater.ProgramData
         /// <exception cref="ProgramDataNotReadableException"></exception>
         public void Load()
         {
-            if (!File.Exists(pathToJsonFile))
+            if (!File.Exists(_pathToJsonFile))
             {
                 return;
             }
 
             try
             {
-                JsonValue jsonData = JsonReader.ParseFile(pathToJsonFile);
+                JsonValue jsonData = JsonReader.ParseFile(_pathToJsonFile);
 
                 if (!jsonData.IsJsonObject)
                 {
@@ -114,7 +114,7 @@ namespace TaystJkUpdater.ProgramData
 
             try
             {
-                fileStream = new FileStream(pathToJsonFile, FileMode.OpenOrCreate, FileAccess.Write);
+                fileStream = new FileStream(_pathToJsonFile, FileMode.OpenOrCreate, FileAccess.Write);
                 streamWriter = new StreamWriter(fileStream, Encoding.UTF8);
                 JsonWriter jsonWriter = new JsonWriter(streamWriter, pretty: true);
 

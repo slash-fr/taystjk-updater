@@ -10,8 +10,8 @@ namespace TaystJkUpdater.ProgramData
     /// </summary>
     internal class UpdateLock : IDisposable
     {
-        private readonly FileStream lockFileStream;
-        private bool disposed = false;
+        private readonly FileStream _lockFileStream;
+        private bool _disposed = false;
 
         /// <summary>
         /// Creates a lock file, unless already locked by another process.
@@ -48,7 +48,7 @@ namespace TaystJkUpdater.ProgramData
 
                 string pathToLockFile = pathToLockFolder + Path.DirectorySeparatorChar + "update.lock";
 
-                lockFileStream = new FileStream(
+                _lockFileStream = new FileStream(
                     pathToLockFile,
                     FileMode.OpenOrCreate, // CreateNew would fail if the file already existed
                     FileAccess.Write,
@@ -80,17 +80,17 @@ namespace TaystJkUpdater.ProgramData
 
         protected virtual void Dispose(bool disposing)
         {
-            if (disposed)
+            if (_disposed)
             {
                 return;
             }
 
             if (disposing)
             {
-                lockFileStream.Dispose();
+                _lockFileStream.Dispose();
             }
 
-            disposed = true;
+            _disposed = true;
         }
 
         ~UpdateLock()

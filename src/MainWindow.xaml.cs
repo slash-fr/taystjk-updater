@@ -14,23 +14,23 @@ namespace TaystJkUpdater
 {
     public partial class MainWindow : Window
     {
-        private Logger logger;
-        private UpdateLock updateLock;
-        private HttpClient httpClient;
-        private TaystJkUpdaterLogic taystJkUpdater;
-        private readonly CancellationTokenSource cancellationTokenSource;
+        private Logger _logger;
+        private UpdateLock _updateLock;
+        private HttpClient _httpClient;
+        private TaystJkUpdaterLogic _taystJkUpdater;
+        private readonly CancellationTokenSource _cancellationTokenSource;
 
         public MainWindow()
         {
             InitializeComponent();
-            cancellationTokenSource = new CancellationTokenSource();
+            _cancellationTokenSource = new CancellationTokenSource();
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             try
             {
-                logger = new Logger();
+                _logger = new Logger();
 
                 try
                 {
@@ -42,21 +42,21 @@ namespace TaystJkUpdater
                     // Close the initial splash screen
                     ((App)App.Current).SplashScreen.Close(TimeSpan.FromSeconds(0.5));
 
-                    await PerformUpdate(logger);
+                    await PerformUpdate(_logger);
                 }
                 catch (TaskCanceledException exception)
                 {
                     // Typically happens when the user clicks the "Skip" button
-                    logger.Debug(exception.ToString());
+                    _logger.Debug(exception.ToString());
                 }
                 catch (ProgramDataNotReadableException exception)
                 {
-                    logger.Error(exception.Message, exception.InnerException);
+                    _logger.Error(exception.Message, exception.InnerException);
                     DisplayError("Could not read from the ProgramData folder!");
                 }
                 catch (ProgramDataNotWritableException exception)
                 {
-                    logger.Error(exception.Message, exception.InnerException);
+                    _logger.Error(exception.Message, exception.InnerException);
                     DisplayError("Could not write to the ProgramData folder!");
                 }
                 catch (Exception exception)
@@ -64,14 +64,14 @@ namespace TaystJkUpdater
                     if (!(exception is UnloggableErrorException))
                     {
                         const string message = "An unexpected error occurred!";
-                        logger.Error(message, exception);
+                        _logger.Error(message, exception);
                         DisplayError(message);
                     }
                 }
                 finally
                 {
-                    httpClient?.Dispose();
-                    updateLock?.Dispose();
+                    _httpClient?.Dispose();
+                    _updateLock?.Dispose();
                 }
             }
             catch (UnloggableErrorException exception)
@@ -97,9 +97,9 @@ namespace TaystJkUpdater
 
         private async Task PerformUpdate(Logger logger)
         {
-            taystJkUpdater = new TaystJkUpdaterLogic(logger);
+            _taystJkUpdater = new TaystJkUpdaterLogic(logger);
 
-            if (!await Task.Run(taystJkUpdater.InitializeUpdater))
+            if (!await Task.Run(_taystJkUpdater.InitializeUpdater))
             {
                 DisplayError("TaystJK executable was not found!", preventsGameLaunch: true);
                 return;
@@ -109,16 +109,16 @@ namespace TaystJkUpdater
 
             PersistentState persistentState = new PersistentState();
             await Task.Run(persistentState.Load);
-            httpClient = new HttpClient();
+            _httpClient = new HttpClient();
 
             StatusLabel.Content = "Checking for TaystJK updates...";
             SkipButton.Visibility = Visibility.Visible;
 
             UpdateCheckResult updateCheckResult = await Task.Run(
-                () => taystJkUpdater.CheckForUpdates(httpClient, cancellationTokenSource.Token, persistentState)
+                () => _taystJkUpdater.CheckForUpdates(_httpClient, _cancellationTokenSource.Token, persistentState)
             );
 
-            if (cancellationTokenSource.IsCancellationRequested)
+            if (_cancellationTokenSource.IsCancellationRequested)
             {
                 return;
             }
@@ -151,7 +151,7 @@ namespace TaystJkUpdater
             };
 
             bool downloadedSuccessfully = await Task.Run(
-                () => taystJkUpdater.DownloadLatestRelease(httpClient, cancellationTokenSource.Token, progress)
+                () => _taystJkUpdater.DownloadLatestRelease(_httpClient, _cancellationTokenSource.Token, progress)
             );
 
             if (!downloadedSuccessfully)
@@ -160,26 +160,26 @@ namespace TaystJkUpdater
                 return;
             }
 
-            if (cancellationTokenSource.IsCancellationRequested)
+            if (_cancellationTokenSource.IsCancellationRequested)
             {
                 return;
             }
 
             StatusLabel.Content = "Unpacking TaystJK update...";
-            if (!await Task.Run(taystJkUpdater.UnpackLatestRelease))
+            if (!await Task.Run(_taystJkUpdater.UnpackLatestRelease))
             {
                 DisplayError("Failed to unpack the new TaystJK version!");
                 return;
             }
 
-            if (cancellationTokenSource.IsCancellationRequested)
+            if (_cancellationTokenSource.IsCancellationRequested)
             {
                 return;
             }
 
             StatusLabel.Content = "Backing up current TaystJK files...";
             bool backedUpSuccessfully = await Task.Run(
-                () => taystJkUpdater.BackupCurrentFiles(cancellationTokenSource.Token)
+                () => _taystJkUpdater.BackupCurrentFiles(_cancellationTokenSource.Token)
             );
             if (!backedUpSuccessfully)
             {
@@ -187,7 +187,7 @@ namespace TaystJkUpdater
                 return;
             }
 
-            if (cancellationTokenSource.IsCancellationRequested)
+            if (_cancellationTokenSource.IsCancellationRequested)
             {
                 return;
             }
@@ -195,7 +195,7 @@ namespace TaystJkUpdater
             StatusLabel.Content = "Applying TaystJK update...";
             SkipButton.Visibility = Visibility.Hidden; // Skipping would leave a partially updated version...
             bool copiedNewFilesSuccessfully = await Task.Run(
-                () => taystJkUpdater.CopyNewFiles(persistentState)
+                () => _taystJkUpdater.CopyNewFiles(persistentState)
             );
             if (!copiedNewFilesSuccessfully)
             {
@@ -213,8 +213,8 @@ namespace TaystJkUpdater
         private async Task AcquireLock(Logger logger)
         {
             int totalLockDelayInSeconds = 0;
-            updateLock = UpdateLock.Acquire();
-            while (updateLock is null)
+            _updateLock = UpdateLock.Acquire();
+            while (_updateLock is null)
             {
                 if (totalLockDelayInSeconds == 0)
                 {
@@ -231,7 +231,7 @@ namespace TaystJkUpdater
 
                 await Task.Delay(1000);
                 totalLockDelayInSeconds++;
-                updateLock = UpdateLock.Acquire();
+                _updateLock = UpdateLock.Acquire();
             }
 
             ButtonRow.Visibility = Visibility.Hidden;
@@ -245,13 +245,13 @@ namespace TaystJkUpdater
         /// <param name="preventsGameLaunch">If true, the "Launch anyway" button won't be shown</param>
         private async void DisplayError(string errorMessage, bool preventsGameLaunch = false)
         {
-            if (cancellationTokenSource.IsCancellationRequested)
+            if (_cancellationTokenSource.IsCancellationRequested)
             {
                 // Don't display the error if the user has clicked the "Skip" button (the updater will close soon)
                 return;
             }
 
-            updateLock?.Dispose(); // Release the lock now (no need to wait until the updater closes)
+            _updateLock?.Dispose(); // Release the lock now (no need to wait until the updater closes)
 
             StatusLabel.Content = errorMessage;
             SkipButton.Visibility = Visibility.Hidden;
@@ -270,7 +270,7 @@ namespace TaystJkUpdater
         /// <param name="successMessage">Status message to display</param>
         private async Task LaunchTaystJkWithSuccessMessage(string successMessage)
         {
-            updateLock?.Dispose(); // Release the lock now (no need to wait until the updater closes)
+            _updateLock?.Dispose(); // Release the lock now (no need to wait until the updater closes)
 
             StatusLabel.Content = successMessage;
 
@@ -279,7 +279,7 @@ namespace TaystJkUpdater
             UpdatingIcon.Visibility = Visibility.Hidden;
 
             Topmost = true;
-            _ = Task.Run(taystJkUpdater.LaunchTaystJK);
+            _ = Task.Run(_taystJkUpdater.LaunchTaystJK);
 
             await SuccessIcon.AnimateIn();
             await Task.Delay(2000);
@@ -289,12 +289,12 @@ namespace TaystJkUpdater
 
         private async void LogsButton_Click(object sender, RoutedEventArgs e)
         {
-            logger.Debug("The \"Open log file\" button was clicked.");
+            _logger.Debug("The \"Open log file\" button was clicked.");
             LogsButton.IsEnabled = false;
 
             using (Process textEditorProcess = new Process())
             {
-                textEditorProcess.StartInfo = new ProcessStartInfo(logger.LogFilePath)
+                textEditorProcess.StartInfo = new ProcessStartInfo(_logger.LogFilePath)
                 {
                     UseShellExecute = true
                 };
@@ -307,7 +307,7 @@ namespace TaystJkUpdater
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)
         {
-            logger.Debug("The \"Exit\" button was clicked.");
+            _logger.Debug("The \"Exit\" button was clicked.");
             Close();
         }
 
@@ -318,7 +318,7 @@ namespace TaystJkUpdater
             LaunchButton.IsEnabled = false;
             StatusLabel.Content = "Launching...";
             Topmost = true;
-            await Task.Run(taystJkUpdater.LaunchTaystJK);
+            await Task.Run(_taystJkUpdater.LaunchTaystJK);
             await ErrorIcon.AnimateOut();
             await Task.Delay(1000);
             Close();
@@ -326,9 +326,9 @@ namespace TaystJkUpdater
 
         private async void SkipButton_Click(object sender, RoutedEventArgs e)
         {
-            logger.Info("Skipping...");
+            _logger.Info("Skipping...");
             SkipButton.IsEnabled = false;
-            cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Cancel();
             await LaunchTaystJkWithSuccessMessage("Skipped. Launching...");
         }
     }

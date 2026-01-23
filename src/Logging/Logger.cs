@@ -10,19 +10,19 @@ namespace TaystJkUpdater.Logging
     {
         public string LogFilePath { get; }
 
-        private readonly string logFolderPath;
-        private readonly int processId;
+        private readonly string _logFolderPath;
+        private readonly int _processId;
 
         public Logger()
         {
             // Log to %LOCALAPPDATA% to protect user privacy,
             // i.e. avoid making all TaystJK launch times available to all users (on a multi-user system).
-            logFolderPath = AppEnvironment.PathToUpdaterLocalAppData;
-            LogFilePath = logFolderPath + Path.DirectorySeparatorChar
+            _logFolderPath = AppEnvironment.PathToUpdaterLocalAppData;
+            LogFilePath = _logFolderPath + Path.DirectorySeparatorChar
                 + DateTime.Now.ToString("yyyy-MM") + "-updater-log.txt";
             using (Process currentProcess = Process.GetCurrentProcess())
             {
-                processId = currentProcess.Id;
+                _processId = currentProcess.Id;
             }
         }
 
@@ -105,16 +105,16 @@ namespace TaystJkUpdater.Logging
                     ////////////////////////////////////////////////////////////
                     // Enough boilerplate already, let's log the damn message
 
-                    if (!Directory.Exists(logFolderPath))
+                    if (!Directory.Exists(_logFolderPath))
                     {
-                        Directory.CreateDirectory(logFolderPath);
+                        Directory.CreateDirectory(_logFolderPath);
                     }
 
                     string dateTimeString = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
                     File.AppendAllText(
                         LogFilePath,
-                        dateTimeString + " - [" + processId + "] - " + level + " - " + message + "\n"
+                        dateTimeString + " - [" + _processId + "] - " + level + " - " + message + "\n"
                     );
 
                     // End of the logging code

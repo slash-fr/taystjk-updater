@@ -21,31 +21,31 @@ namespace TaystJkUpdater.Updater
     /// </summary>
     internal class TaystJkUpdaterLogic
     {
-        private readonly HashSet<string> allowedTaystJkFilenames = new HashSet<string>()
+        private readonly HashSet<string> _allowedTaystJkFilenames = new HashSet<string>()
         {
             "taystjk.x86_64.exe",
             "taystjk.x86.exe",
             "taystjk.arm64.exe", // Just in case...
         };
 
-        private readonly Dictionary<string, string> taystJkArchitectureByFilename = new Dictionary<string, string>()
+        private readonly Dictionary<string, string> _taystJkArchitectureByFilename = new Dictionary<string, string>()
         {
             { "taystjk.x86_64.exe", "x86_64" },
             { "taystjk.x86.exe",    "x86"    },
             { "taystjk.arm64.exe",  "arm64"  },
         };
 
-        private readonly Logger logger;
-        private string commandLineArgsAsString = "";
-        private string pathToTaystJkExe = "";
-        private string taystJkArchitecture = "";
-        private DateTime? latestReleaseCreatedAt = null;
-        private string pathToDownloadedFile = "";
-        private string pathToExtractedArchive = "";
+        private readonly Logger _logger;
+        private string _commandLineArgsAsString = "";
+        private string _pathToTaystJkExe = "";
+        private string _taystJkArchitecture = "";
+        private DateTime? _latestReleaseCreatedAt = null;
+        private string _pathToDownloadedFile = "";
+        private string _pathToExtractedArchive = "";
 
         public TaystJkUpdaterLogic(Logger logger)
         {
-            this.logger = logger;
+            _logger = logger;
         }
 
         /// <summary>
@@ -67,45 +67,45 @@ namespace TaystJkUpdater.Updater
             CancellationToken cancellationToken,
             PersistentState persistentState)
         {
-            if (String.IsNullOrEmpty(pathToTaystJkExe))
+            if (String.IsNullOrEmpty(_pathToTaystJkExe))
             {
                 throw new InvalidOperationException(
-                    "CheckForUpdates() was called too soon (missing: pathToTaystJkExe)."
+                    "CheckForUpdates() was called too soon (missing: _pathToTaystJkExe)."
                 );
             }
 
-            logger.Debug("Checking for TaystJK updates...");
+            _logger.Debug("Checking for TaystJK updates...");
 
             // Don't check more than once per hour
-            if (persistentState.LastCheckedByPath.TryGetValue(pathToTaystJkExe, out DateTime lastChecked)
+            if (persistentState.LastCheckedByPath.TryGetValue(_pathToTaystJkExe, out DateTime lastChecked)
                 && DateTime.Now < lastChecked.AddHours(1))
             {
-                logger.Info("Already checked less than an hour ago.");
+                _logger.Info("Already checked less than an hour ago.");
                 return UpdateCheckResult.AlreadyCheckedRecently;
             }
 
             if (!(persistentState.GithubThrottledUntil is null)
                 && persistentState.GithubThrottledUntil >= DateTime.Now)
             {
-                logger.Warning("GitHub API is throttled due to a recent 429 error.");
+                _logger.Warning("GitHub API is throttled due to a recent 429 error.");
                 return UpdateCheckResult.AlreadyCheckedRecently;
             }
 
             ReleaseInfo latestRelease;
             Uri requestUri = new Uri("http://localhost/latest.php"); // TODO
             //Uri requestUri = new Uri("https://api.github.com/repos/taysta/TaystJK/releases/tags/latest");
-            logger.Debug("GitHub API request: " + requestUri);
+            _logger.Debug("GitHub API request: " + requestUri);
 
             try
             {
                 latestRelease = await GithubApiHelper.GetReleaseInfo(httpClient, requestUri, cancellationToken);
-                latestReleaseCreatedAt = latestRelease.CreatedAt;
+                _latestReleaseCreatedAt = latestRelease.CreatedAt;
             }
             catch (TooManyRequestsException exception)
             {
-                logger.Error(exception.Message);
+                _logger.Error(exception.Message);
 
-                persistentState.LastCheckedByPath[pathToTaystJkExe] = DateTime.Now;
+                persistentState.LastCheckedByPath[_pathToTaystJkExe] = DateTime.Now;
                 persistentState.GithubThrottledUntil = DateTime.Now.AddHours(1);
                 persistentState.Save();
 
@@ -115,11 +115,11 @@ namespace TaystJkUpdater.Updater
             {
                 if (exception.InnerException != null)
                 {
-                    logger.Error(exception.Message, exception.InnerException);
+                    _logger.Error(exception.Message, exception.InnerException);
                 }
                 else
                 {
-                    logger.Error(exception.Message);
+                    _logger.Error(exception.Message);
                 }
 
                 // Don't update persistentState.LastCheckedByPath here,
@@ -137,20 +137,20 @@ namespace TaystJkUpdater.Updater
                 {
                     if (match.Value.ToLower().StartsWith(currentCommitHash.ToLower()))
                     {
-                        logger.Info("TaystJK is already up to date, according to the commit hash.");
-                        logger.Debug("Current commit: " + currentCommitHash);
-                        logger.Debug("Latest release: " + match.Value);
+                        _logger.Info("TaystJK is already up to date, according to the commit hash.");
+                        _logger.Debug("Current commit: " + currentCommitHash);
+                        _logger.Debug("Latest release: " + match.Value);
 
                         // Already up-to-date - Don't check during the next hour
-                        persistentState.LastCheckedByPath[pathToTaystJkExe] = DateTime.Now;
+                        persistentState.LastCheckedByPath[_pathToTaystJkExe] = DateTime.Now;
                         persistentState.Save();
 
                         return UpdateCheckResult.AlreadyUpToDate;
                     }
 
-                    logger.Info("New TaystJK version found, based on the commit hash.");
-                    logger.Info("Current commit: " + currentCommitHash);
-                    logger.Info("Latest release: " + match.Value);
+                    _logger.Info("New TaystJK version found, based on the commit hash.");
+                    _logger.Info("Current commit: " + currentCommitHash);
+                    _logger.Info("Latest release: " + match.Value);
 
                     // Don't update persistentState.LastCheckedByPath yet,
                     // because the update might fail before being fully installed,
@@ -161,13 +161,13 @@ namespace TaystJkUpdater.Updater
             }
 
             // Otherwise, use the date
-            DateTime localCreationTime = new FileInfo(pathToTaystJkExe).CreationTime;
+            DateTime localCreationTime = new FileInfo(_pathToTaystJkExe).CreationTime;
 
             if (localCreationTime < latestRelease.CreatedAt)
             {
-                logger.Info("New TaystJK version found, based on the file timestamps.");
-                logger.Info("Local exe file created at: " + localCreationTime.ToString("yyyy-MM-dd HH:mm:ss"));
-                logger.Info("Latest release created at: " + latestRelease.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
+                _logger.Info("New TaystJK version found, based on the file timestamps.");
+                _logger.Info("Local exe file created at: " + localCreationTime.ToString("yyyy-MM-dd HH:mm:ss"));
+                _logger.Info("Latest release created at: " + latestRelease.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
 
                 // Don't update persistentState.LastCheckedByPath yet,
                 // because the update might fail before being fully installed,
@@ -177,12 +177,12 @@ namespace TaystJkUpdater.Updater
             }
 
             // Already up to date - Don't check during the next hour
-            persistentState.LastCheckedByPath[pathToTaystJkExe] = DateTime.Now;
+            persistentState.LastCheckedByPath[_pathToTaystJkExe] = DateTime.Now;
             persistentState.Save();
 
-            logger.Info("TaystJK is already up to date, according to the file timestamps.");
-            logger.Debug("Local exe file created at: " + localCreationTime.ToString("yyyy-MM-dd HH:mm:ss"));
-            logger.Debug("Latest release created at: " + latestRelease.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
+            _logger.Info("TaystJK is already up to date, according to the file timestamps.");
+            _logger.Debug("Local exe file created at: " + localCreationTime.ToString("yyyy-MM-dd HH:mm:ss"));
+            _logger.Debug("Latest release created at: " + latestRelease.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
 
             return UpdateCheckResult.AlreadyUpToDate;
         }
@@ -198,10 +198,10 @@ namespace TaystJkUpdater.Updater
             CancellationToken cancellationToken,
             IProgress<int> progress)
         {
-            if (String.IsNullOrEmpty(taystJkArchitecture))
+            if (String.IsNullOrEmpty(_taystJkArchitecture))
             {
                 throw new InvalidOperationException(
-                    "DownloadLatestRelease() was called too soon (missing: taystJkArchitecture)."
+                    "DownloadLatestRelease() was called too soon (missing: _taystJkArchitecture)."
                 );
             }
 
@@ -211,8 +211,8 @@ namespace TaystJkUpdater.Updater
             }
             catch (ProgramDataNotWritableException exception)
             {
-                logger.Warning("Could not purge old downloads.");
-                logger.Debug(exception.ToString());
+                _logger.Warning("Could not purge old downloads.");
+                _logger.Debug(exception.ToString());
             }
 
             FileStream destinationFilestream = null;
@@ -220,16 +220,16 @@ namespace TaystJkUpdater.Updater
             try
             {
                 string pathToDownloadDirectory = ProgramDataHelper.CreateNewDownloadSubdirectory();
-                string downloadFilename = "TaystJK-windows-" + taystJkArchitecture + ".zip";
-                pathToDownloadedFile = pathToDownloadDirectory + Path.DirectorySeparatorChar + downloadFilename;
+                string downloadFilename = "TaystJK-windows-" + _taystJkArchitecture + ".zip";
+                _pathToDownloadedFile = pathToDownloadDirectory + Path.DirectorySeparatorChar + downloadFilename;
 
                 string downloadUri = "http://localhost/" + downloadFilename;
                 //string downloadUri = "https://github.com/taysta/TaystJK/releases/download/latest/" + downloadFilename;
 
-                logger.Debug("Downloading: " + downloadUri);
+                _logger.Debug("Downloading: " + downloadUri);
 
                 destinationFilestream = new FileStream(
-                    pathToDownloadedFile,
+                    _pathToDownloadedFile,
                     FileMode.CreateNew,
                     FileAccess.Write,
                     FileShare.None
@@ -244,7 +244,7 @@ namespace TaystJkUpdater.Updater
                     exception is SecurityException     || exception is UnauthorizedAccessException     ||
                     exception is PathTooLongException  || exception is IOException                     )
                 {
-                    logger.Error("An error occurred while downloading the latest TaystJK release.", exception);
+                    _logger.Error("An error occurred while downloading the latest TaystJK release.", exception);
                     return false;
                 }
 
@@ -256,8 +256,8 @@ namespace TaystJkUpdater.Updater
                 destinationFilestream?.Dispose();
             }
 
-            logger.Info(
-                "Successfully downloaded the latest TaystJK release to: " + '"' + pathToDownloadedFile + '"' + "."
+            _logger.Info(
+                "Successfully downloaded the latest TaystJK release to: " + '"' + _pathToDownloadedFile + '"' + "."
             );
 
             return true;
@@ -269,21 +269,21 @@ namespace TaystJkUpdater.Updater
         /// <returns>true if the new version was unpacked successfully, false otherwise</returns>
         public bool UnpackLatestRelease()
         {
-            if (String.IsNullOrEmpty(pathToDownloadedFile))
+            if (String.IsNullOrEmpty(_pathToDownloadedFile))
             {
                 throw new InvalidOperationException(
-                    "UnpackLatestRelease() was called too soon (missing: pathToDownloadedFile)."
+                    "UnpackLatestRelease() was called too soon (missing: _pathToDownloadedFile)."
                 );
             }
 
-            logger.Debug("Unpacking: " + '"' + pathToDownloadedFile + '"');
+            _logger.Debug("Unpacking: " + '"' + _pathToDownloadedFile + '"');
 
-            pathToExtractedArchive = Path.GetDirectoryName(pathToDownloadedFile) 
-                + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(pathToDownloadedFile);
+            _pathToExtractedArchive = Path.GetDirectoryName(_pathToDownloadedFile) 
+                + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(_pathToDownloadedFile);
 
             try
             {
-                ZipFile.ExtractToDirectory(pathToDownloadedFile, pathToExtractedArchive);
+                ZipFile.ExtractToDirectory(_pathToDownloadedFile, _pathToExtractedArchive);
             }
             catch (Exception exception)
             {
@@ -291,7 +291,7 @@ namespace TaystJkUpdater.Updater
                     exception is SecurityException     || exception is UnauthorizedAccessException ||
                     exception is PathTooLongException  || exception is IOException                 )
                 {
-                    logger.Error("An error occurred while unpacking the latest TaystJK release.", exception);
+                    _logger.Error("An error occurred while unpacking the latest TaystJK release.", exception);
                     return false;
                 }
 
@@ -299,8 +299,8 @@ namespace TaystJkUpdater.Updater
                 throw exception;
             }
 
-            logger.Info(
-                "Successfully unpacked the new TaystJK release to: " + '"' + pathToExtractedArchive + '"' + "."
+            _logger.Info(
+                "Successfully unpacked the new TaystJK release to: " + '"' + _pathToExtractedArchive + '"' + "."
             );
 
             return true;
@@ -312,28 +312,28 @@ namespace TaystJkUpdater.Updater
         /// <returns>true if the files were backed up successfully, false otherwise</returns>
         public bool BackupCurrentFiles(CancellationToken cancellationToken)
         {
-            if (String.IsNullOrEmpty(pathToTaystJkExe))
+            if (String.IsNullOrEmpty(_pathToTaystJkExe))
             {
                 throw new InvalidOperationException(
-                    "BackupCurrentFiles() was called too soon (missing: pathToTaystJkExe)."
+                    "BackupCurrentFiles() was called too soon (missing: _pathToTaystJkExe)."
                 );
             }
 
-            if (String.IsNullOrEmpty(pathToExtractedArchive))
+            if (String.IsNullOrEmpty(_pathToExtractedArchive))
             {
                 throw new InvalidOperationException(
-                    "BackupCurrentFiles() was called too soon (missing: pathToExtractedArchive)."
+                    "BackupCurrentFiles() was called too soon (missing: _pathToExtractedArchive)."
                 );
             }
 
             try
             {
-                ProgramDataHelper.PurgeOldBackups(logger);
+                ProgramDataHelper.PurgeOldBackups(_logger);
             }
             catch (ProgramDataNotWritableException exception)
             {
-                logger.Warning("Could not purge old backups.");
-                logger.Debug(exception.ToString());
+                _logger.Warning("Could not purge old backups.");
+                _logger.Debug(exception.ToString());
             }
 
             string pathToBackupDirectory = "";
@@ -341,10 +341,10 @@ namespace TaystJkUpdater.Updater
             try
             {
                 pathToBackupDirectory = ProgramDataHelper.CreateNewBackupSubdirectory();
-                logger.Debug("Backing up current TaystJK files to: " + '"' + pathToBackupDirectory + '"');
+                _logger.Debug("Backing up current TaystJK files to: " + '"' + pathToBackupDirectory + '"');
 
-                DirectoryInfo sourceDirectory = new DirectoryInfo(pathToExtractedArchive);
-                DirectoryInfo destinationDirectory = new DirectoryInfo(Path.GetDirectoryName(pathToTaystJkExe));
+                DirectoryInfo sourceDirectory = new DirectoryInfo(_pathToExtractedArchive);
+                DirectoryInfo destinationDirectory = new DirectoryInfo(Path.GetDirectoryName(_pathToTaystJkExe));
                 DirectoryInfo backupDirectory = new DirectoryInfo(pathToBackupDirectory);
 
                 BackupExistingFilesRecursively(
@@ -361,7 +361,7 @@ namespace TaystJkUpdater.Updater
                     exception is SecurityException     || exception is UnauthorizedAccessException     ||
                     exception is PathTooLongException  )
                 {
-                    logger.Error("An error occurred while backing up current TaystJK files.", exception);
+                    _logger.Error("An error occurred while backing up current TaystJK files.", exception);
                     return false;
                 }
 
@@ -369,7 +369,7 @@ namespace TaystJkUpdater.Updater
                 throw exception;
             }
 
-            logger.Info("Successfully backed up current TaystJK files to: " + '"' + pathToBackupDirectory + '"' + ".");
+            _logger.Info("Successfully backed up current TaystJK files to: " + '"' + pathToBackupDirectory + '"' + ".");
             return true;
         }
 
@@ -379,55 +379,55 @@ namespace TaystJkUpdater.Updater
         /// <returns>true if the files were copied successfully, false otherwise</returns>
         public bool CopyNewFiles(PersistentState persistentState)
         {
-            if (String.IsNullOrEmpty(pathToTaystJkExe))
+            if (String.IsNullOrEmpty(_pathToTaystJkExe))
             {
                 throw new InvalidOperationException(
-                    "CopyNewFiles() was called too soon (missing: pathToTaystJkExe)."
+                    "CopyNewFiles() was called too soon (missing: _pathToTaystJkExe)."
                 );
             }
 
-            if (String.IsNullOrEmpty(pathToExtractedArchive))
+            if (String.IsNullOrEmpty(_pathToExtractedArchive))
             {
                 throw new InvalidOperationException(
-                    "CopyNewFiles() was called too soon (missing: pathToExtractedArchive)."
+                    "CopyNewFiles() was called too soon (missing: _pathToExtractedArchive)."
                 );
             }
 
-            if (latestReleaseCreatedAt is null)
+            if (_latestReleaseCreatedAt is null)
             {
                 throw new InvalidOperationException(
-                    "CopyNewFiles() was called too soon (missing: latestReleaseCreatedAt)."
+                    "CopyNewFiles() was called too soon (missing: _latestReleaseCreatedAt)."
                 );
             }
 
-            logger.Debug("Copying files from the new TaystJK version...");
+            _logger.Debug("Copying files from the new TaystJK version...");
 
-            string pathToTaystJkDirectory = Path.GetDirectoryName(pathToTaystJkExe);
+            string pathToTaystJkDirectory = Path.GetDirectoryName(_pathToTaystJkExe);
             
             try
             {
-                string pathToNewTaystJkExe = pathToExtractedArchive
-                    + Path.DirectorySeparatorChar + Path.GetFileName(pathToTaystJkExe);
+                string pathToNewTaystJkExe = _pathToExtractedArchive
+                    + Path.DirectorySeparatorChar + Path.GetFileName(_pathToTaystJkExe);
 
                 if (!File.Exists(pathToNewTaystJkExe))
                 {
-                    logger.Error(
+                    _logger.Error(
                         "Could not find the new executable file. "
                         + "Was expecting: " + '"' + pathToNewTaystJkExe + '"'
                     );
                     return false;
                 }
 
-                DirectoryInfo sourceDirectory = new DirectoryInfo(pathToExtractedArchive);
+                DirectoryInfo sourceDirectory = new DirectoryInfo(_pathToExtractedArchive);
                 DirectoryInfo destinationDirectory = new DirectoryInfo(pathToTaystJkDirectory);
 
                 // Copy all files EXCEPT the main exe:
                 CopyNewFilesRecursively(sourceDirectory, destinationDirectory);
 
                 // Copy the main exe AFTER the others:
-                logger.Debug("Copying:  " + Path.GetFileName(pathToNewTaystJkExe));
-                File.Copy(pathToNewTaystJkExe, pathToTaystJkExe, overwrite: true);
-                FixFileTimestamps(pathToTaystJkExe);
+                _logger.Debug("Copying:  " + Path.GetFileName(pathToNewTaystJkExe));
+                File.Copy(pathToNewTaystJkExe, _pathToTaystJkExe, overwrite: true);
+                FixFileTimestamps(_pathToTaystJkExe);
                 // Because the main exe is used to determine what version is currently installed.
             }
             catch (Exception exception)
@@ -436,7 +436,7 @@ namespace TaystJkUpdater.Updater
                     exception is FileNotFoundException || exception is DirectoryNotFoundException      ||
                     exception is SecurityException     || exception is UnauthorizedAccessException     )
                 {
-                    logger.Error("An error occurred while copying files from the new TaystJK release.", exception);
+                    _logger.Error("An error occurred while copying files from the new TaystJK release.", exception);
                     return false;
                 }
 
@@ -444,10 +444,10 @@ namespace TaystJkUpdater.Updater
                 throw exception;
             }
 
-            logger.Info("Applied TaystJK update successfully.");
+            _logger.Info("Applied TaystJK update successfully.");
             DetectCurrentTaystJkCommitHash();
 
-            persistentState.LastCheckedByPath[pathToTaystJkExe] = DateTime.Now;
+            persistentState.LastCheckedByPath[_pathToTaystJkExe] = DateTime.Now;
             persistentState.Save();
 
             try
@@ -456,8 +456,8 @@ namespace TaystJkUpdater.Updater
             }
             catch (ProgramDataNotWritableException exception)
             {
-                logger.Warning("Could not purge downloads.");
-                logger.Debug(exception.ToString());
+                _logger.Warning("Could not purge downloads.");
+                _logger.Debug(exception.ToString());
             }
 
             return true;
@@ -465,8 +465,8 @@ namespace TaystJkUpdater.Updater
 
         public void LaunchTaystJK()
         {
-            logger.Debug("Launching TaystJK...");
-            using (Process.Start(pathToTaystJkExe, commandLineArgsAsString)) { }
+            _logger.Debug("Launching TaystJK...");
+            using (Process.Start(_pathToTaystJkExe, _commandLineArgsAsString)) { }
         }
         
         ////////////////////////////////////////////////////////////////////////
@@ -474,8 +474,8 @@ namespace TaystJkUpdater.Updater
         // ↓
 
         /// <summary>
-        /// Parses the command line arguments, initializes commandLineArgsAsString,
-        /// and pathToTaystJkExe if present in the arguments.
+        /// Parses the command line arguments, initializes _commandLineArgsAsString,
+        /// and _pathToTaystJkExe if present in the arguments.
         /// </summary>
         /// <returns>true if the parsing succeeds, false otherwise</returns>
         private bool ParseCommandLineArgs()
@@ -498,53 +498,53 @@ namespace TaystJkUpdater.Updater
                     pathCandidate = String.Concat(pathCandidate, ".exe");
                 }
 
-                if (allowedTaystJkFilenames.Contains(Path.GetFileName(pathCandidate).ToLower()))
+                if (_allowedTaystJkFilenames.Contains(Path.GetFileName(pathCandidate).ToLower()))
                 {
-                    pathToTaystJkExe = pathCandidate;
+                    _pathToTaystJkExe = pathCandidate;
                     commandLineArgs.RemoveAt(0);
                 }
             }
 
-            commandLineArgsAsString = String.Join(" ", commandLineArgs);
+            _commandLineArgsAsString = String.Join(" ", commandLineArgs);
             // TODO: escape arguments?
 
             return true;
         }
 
         /// <summary>
-        /// Find TaystJK's executable, and initialize pathToTaystJkExe
+        /// Finds TaystJK's executable, and initializes _pathToTaystJkExe
         /// </summary>
         /// <returns>true if the executable was found, false otherwise</returns>
         private bool FindTaystJkExe()
         {
             // Validate the "path to TaystJK" argument (if any)
-            if (!String.IsNullOrEmpty(pathToTaystJkExe))
+            if (!String.IsNullOrEmpty(_pathToTaystJkExe))
             {
-                pathToTaystJkExe = Path.GetFullPath(pathToTaystJkExe);
-                if (File.Exists(pathToTaystJkExe))
+                _pathToTaystJkExe = Path.GetFullPath(_pathToTaystJkExe);
+                if (File.Exists(_pathToTaystJkExe))
                 {
-                    logger.Info("Found the specified TaystJK executable: " + '"' + pathToTaystJkExe + '"');
+                    _logger.Info("Found the specified TaystJK executable: " + '"' + _pathToTaystJkExe + '"');
                     return true;
                 }
 
-                logger.Error("The specified TaystJK executable does not exist (" + pathToTaystJkExe + ").");
+                _logger.Error("The specified TaystJK executable does not exist (" + _pathToTaystJkExe + ").");
 
                 return false;
             }
 
             // Otherwise, look for the default executable names, in the current folder
-            foreach (string filename in allowedTaystJkFilenames)
+            foreach (string filename in _allowedTaystJkFilenames)
             {
                 string fullPath = Path.GetFullPath(filename);
                 if (File.Exists(fullPath))
                 {
-                    pathToTaystJkExe = fullPath;
-                    logger.Info("Found TaystJK executable in the current folder: " + '"' + pathToTaystJkExe + '"');
+                    _pathToTaystJkExe = fullPath;
+                    _logger.Info("Found TaystJK executable in the current folder: " + '"' + _pathToTaystJkExe + '"');
                     return true;
                 }
             }
 
-            logger.Error(
+            _logger.Error(
                 "TaystJK executable was not found in the current folder (" + Directory.GetCurrentDirectory() + ")."
             );
 
@@ -553,20 +553,20 @@ namespace TaystJkUpdater.Updater
 
         /// <summary>
         /// Detects the CPU architecture from the name of the TaystJK executable,
-        /// and initializes the "taystJkArchitecture" class attribute accordingly.
+        /// and initializes the "_taystJkArchitecture" class attribute accordingly.
         /// </summary>
         /// <returns>True on success, false on failure.</returns>
         private bool DetectTaystJkArchitecture()
         {
-            string basename = Path.GetFileName(pathToTaystJkExe);
-            if (!taystJkArchitectureByFilename.ContainsKey(basename))
+            string basename = Path.GetFileName(_pathToTaystJkExe);
+            if (!_taystJkArchitectureByFilename.ContainsKey(basename))
             {
-                logger.Error("Could not determine the architecture!");
+                _logger.Error("Could not determine the architecture!");
                 return false;
             }
 
-            taystJkArchitecture = taystJkArchitectureByFilename[basename];
-            logger.Debug("Detected architecture: " + taystJkArchitecture);
+            _taystJkArchitecture = _taystJkArchitectureByFilename[basename];
+            _logger.Debug("Detected architecture: " + _taystJkArchitecture);
 
             return true;
         }
@@ -580,22 +580,22 @@ namespace TaystJkUpdater.Updater
             // Ugliest method ever
             try
             {
-                long taystJkExeSize = new FileInfo(pathToTaystJkExe).Length;
+                long taystJkExeSize = new FileInfo(_pathToTaystJkExe).Length;
                 if (taystJkExeSize > 10e6) // Totally arbitrary limit
                 {
                     // Don't load a file larger than 10MB into memory
-                    logger.Warning(
-                        '"' + pathToTaystJkExe + '"' + " was unexpectedly large (" + taystJkExeSize + " bytes) "
+                    _logger.Warning(
+                        '"' + _pathToTaystJkExe + '"' + " was unexpectedly large (" + taystJkExeSize + " bytes) "
                         + "-> Will not load it to determine its version."
                     );
                     return null;
                 }
 
-                string taystJkExeContent = File.ReadAllText(pathToTaystJkExe, System.Text.Encoding.ASCII); // Ouch
+                string taystJkExeContent = File.ReadAllText(_pathToTaystJkExe, System.Text.Encoding.ASCII); // Ouch
                 if (taystJkExeContent.Length < 20)
                 {
-                    logger.Warning(
-                        "Got unexpectedly small content from " + '"' + pathToTaystJkExe + '"'
+                    _logger.Warning(
+                        "Got unexpectedly small content from " + '"' + _pathToTaystJkExe + '"'
                         + " (" + taystJkExeContent.Length + " bytes) "
                         + "-> Will not determine the version from its content."
                     );
@@ -610,7 +610,7 @@ namespace TaystJkUpdater.Updater
                     index = taystJkExeContent.IndexOf(prefix, index);
                     if (index == -1)
                     {
-                        logger.Warning("Could not detect the commit hash from " + '"' + pathToTaystJkExe + '"' + ".");
+                        _logger.Warning("Could not detect the commit hash from " + '"' + _pathToTaystJkExe + '"' + ".");
                         return null;
                     }
 
@@ -622,7 +622,7 @@ namespace TaystJkUpdater.Updater
                     if (match.Success)
                     {
                         string commitHash = match.Groups[1].Value;
-                        logger.Info(
+                        _logger.Info(
                             "Detected commit hash " + '"' + commitHash + '"'
                         );
                         return commitHash;
@@ -634,8 +634,8 @@ namespace TaystJkUpdater.Updater
             }
             catch (Exception exception)
             {
-                logger.Error(
-                    "An error occurred when trying to detect the version from " + '"' + pathToTaystJkExe + '"' + ".",
+                _logger.Error(
+                    "An error occurred when trying to detect the version from " + '"' + _pathToTaystJkExe + '"' + ".",
                     exception
                 );
                 // Other than that, fail silently. (This whole method is a dirty hack, anyway...)
@@ -671,9 +671,9 @@ namespace TaystJkUpdater.Updater
                 }
 
                 string relativePathToSubdir = sourceSubdir.FullName;
-                if (relativePathToSubdir.StartsWith(pathToExtractedArchive + Path.DirectorySeparatorChar))
+                if (relativePathToSubdir.StartsWith(_pathToExtractedArchive + Path.DirectorySeparatorChar))
                 {
-                    relativePathToSubdir = relativePathToSubdir.Substring(pathToExtractedArchive.Length + 1);
+                    relativePathToSubdir = relativePathToSubdir.Substring(_pathToExtractedArchive.Length + 1);
                 }
 
                 DirectoryInfo destinationSubdir = new DirectoryInfo(
@@ -682,11 +682,11 @@ namespace TaystJkUpdater.Updater
 
                 if (!destinationSubdir.Exists)
                 {
-                    logger.Debug("Folder does not exist yet:  " + relativePathToSubdir);
+                    _logger.Debug("Folder does not exist yet:  " + relativePathToSubdir);
                     continue;
                 }
 
-                logger.Debug("Backing up existing folder: " + relativePathToSubdir);
+                _logger.Debug("Backing up existing folder: " + relativePathToSubdir);
 
                 DirectoryInfo backupSubdir = new DirectoryInfo(
                     backupDirectory.FullName + Path.DirectorySeparatorChar + sourceSubdir.Name
@@ -706,9 +706,9 @@ namespace TaystJkUpdater.Updater
                 }
 
                 string relativePathToFile = sourceFile.FullName;
-                if (relativePathToFile.StartsWith(pathToExtractedArchive + Path.DirectorySeparatorChar))
+                if (relativePathToFile.StartsWith(_pathToExtractedArchive + Path.DirectorySeparatorChar))
                 {
-                    relativePathToFile = relativePathToFile.Substring(pathToExtractedArchive.Length + 1);
+                    relativePathToFile = relativePathToFile.Substring(_pathToExtractedArchive.Length + 1);
                 }
 
                 FileInfo destinationFile = new FileInfo(
@@ -717,11 +717,11 @@ namespace TaystJkUpdater.Updater
 
                 if (!destinationFile.Exists)
                 {
-                    logger.Debug("File does not exist yet:    " + relativePathToFile);
+                    _logger.Debug("File does not exist yet:    " + relativePathToFile);
                     continue;
                 }
 
-                logger.Debug("Backing up existing file:   " + relativePathToFile);
+                _logger.Debug("Backing up existing file:   " + relativePathToFile);
 
                 File.Copy(
                     destinationFile.FullName,
@@ -748,9 +748,9 @@ namespace TaystJkUpdater.Updater
             foreach (DirectoryInfo sourceSubdir in sourceDirectory.EnumerateDirectories())
             {
                 string relativePathToSubdir = sourceSubdir.FullName;
-                if (relativePathToSubdir.StartsWith(pathToExtractedArchive + Path.DirectorySeparatorChar))
+                if (relativePathToSubdir.StartsWith(_pathToExtractedArchive + Path.DirectorySeparatorChar))
                 {
-                    relativePathToSubdir = relativePathToSubdir.Substring(pathToExtractedArchive.Length + 1);
+                    relativePathToSubdir = relativePathToSubdir.Substring(_pathToExtractedArchive.Length + 1);
                 }
 
                 DirectoryInfo destinationSubdir = new DirectoryInfo(
@@ -759,12 +759,12 @@ namespace TaystJkUpdater.Updater
 
                 if (!destinationSubdir.Exists)
                 {
-                    logger.Debug("Creating: " + relativePathToSubdir);
+                    _logger.Debug("Creating: " + relativePathToSubdir);
                     destinationSubdir.Create();
                 }
                 else
                 {
-                    logger.Debug("Entering: " + relativePathToSubdir);
+                    _logger.Debug("Entering: " + relativePathToSubdir);
                 }
 
                 CopyNewFilesRecursively(sourceSubdir, destinationSubdir);
@@ -776,19 +776,19 @@ namespace TaystJkUpdater.Updater
                     + Path.DirectorySeparatorChar + sourceFile.Name;
 
                 string relativePathToFile = sourceFile.FullName;
-                if (relativePathToFile.StartsWith(pathToExtractedArchive + Path.DirectorySeparatorChar))
+                if (relativePathToFile.StartsWith(_pathToExtractedArchive + Path.DirectorySeparatorChar))
                 {
-                    relativePathToFile = relativePathToFile.Substring(pathToExtractedArchive.Length + 1);
+                    relativePathToFile = relativePathToFile.Substring(_pathToExtractedArchive.Length + 1);
                 }
 
-                if (pathToDestinationFile == pathToTaystJkExe)
+                if (pathToDestinationFile == _pathToTaystJkExe)
                 {
                     // Update the main exe AFTER all of the other files, as it is used to detect the current version.
-                    logger.Debug("Skipping: " + relativePathToFile + " (will handle it last)");
+                    _logger.Debug("Skipping: " + relativePathToFile + " (will handle it last)");
                     continue;
                 }
 
-                logger.Debug("Copying:  " + relativePathToFile);
+                _logger.Debug("Copying:  " + relativePathToFile);
 
                 File.Copy(sourceFile.FullName, pathToDestinationFile, overwrite: true);
 
@@ -803,16 +803,16 @@ namespace TaystJkUpdater.Updater
         {
             try
             {
-                File.SetCreationTime(pathToFile, (DateTime)latestReleaseCreatedAt);
-                File.SetLastWriteTime(pathToFile, (DateTime)latestReleaseCreatedAt);
+                File.SetCreationTime(pathToFile, (DateTime)_latestReleaseCreatedAt);
+                File.SetLastWriteTime(pathToFile, (DateTime)_latestReleaseCreatedAt);
             }
             catch (Exception exception)
             {
                 if (exception is FileNotFoundException || exception is UnauthorizedAccessException ||
                     exception is PathTooLongException  || exception is IOException                 )
                 {
-                    logger.Warning("Could not fix the file timestamp.");
-                    logger.Debug(exception.ToString());
+                    _logger.Warning("Could not fix the file timestamp.");
+                    _logger.Debug(exception.ToString());
                 }
 
                 // Unexpected exception, just rethrow it:
