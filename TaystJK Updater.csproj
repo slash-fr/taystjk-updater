@@ -96,12 +96,14 @@
     </Compile>
     <Compile Include="src\Logging\Logger.cs" />
     <Compile Include="src\Updater\AppEnvironment.cs" />
+    <Compile Include="src\Updater\GitHelper.cs" />
     <Compile Include="src\Updater\UpdateCheckResult.cs" />
     <Compile Include="src\Updater\TaystJkUpdaterLogic.cs" />
     <Compile Include="src\ProgramData\UpdateLock.cs" />
     <Compile Include="src\Icons\UpdatingIcon.xaml.cs">
       <DependentUpon>UpdatingIcon.xaml</DependentUpon>
     </Compile>
+    <Compile Include="src\Updater\UpdaterUpdater.cs" />
     <Page Include="src\Icons\SuccessIcon.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -155,6 +157,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Include="GitVersion" />
     <None Include="README.md" />
     <None Include="src\app.manifest" />
     <None Include="lib\LightJson\README.md" />
@@ -185,8 +188,11 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="lib\LightJson\LICENSE.txt" />
+    <None Include="lib\LightJson\LICENSE.txt" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>git rev-parse --short HEAD &gt; "$(ProjectDir)\GitVersion"</PreBuildEvent>
+  </PropertyGroup>
 </Project>

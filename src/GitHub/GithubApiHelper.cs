@@ -1,6 +1,7 @@
 ﻿using LightJson;
 using LightJson.Serialization;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -25,9 +26,7 @@ namespace TaystJkUpdater.GitHub
             SetApiHeaders(httpClient);
             HttpResponseMessage response = await GetAsync(httpClient, requestUri, cancellationToken);
             string responseAsString = await response.Content.ReadAsStringAsync();
-            JsonValue parsedResponse = ParseResponse(requestUri, responseAsString);
-
-            return new ReleaseInfo(parsedResponse["created_at"], parsedResponse["target_commitish"]);
+            return ParseResponse(requestUri, responseAsString);
         }
 
         private static void SetApiHeaders(HttpClient httpClient)
@@ -75,7 +74,7 @@ namespace TaystJkUpdater.GitHub
         /// <param name="requestUri">Request URI (for informative purposes)</param>
         /// <param name="responseAsString">A string (hopefully) containing JSON</param>
         /// <exception cref="GithubApiException"></exception>
-        private static JsonValue ParseResponse(Uri requestUri, string responseAsString)
+        private static ReleaseInfo ParseResponse(Uri requestUri, string responseAsString)
         {
             JsonValue parsedResponse;
 
@@ -104,7 +103,43 @@ namespace TaystJkUpdater.GitHub
                 );
             }
 
-            return parsedResponse;
+            if (!parsedResponse["assets"].IsJsonArray)
+            {
+                throw new GithubApiException(
+                    requestUri,
+                    "Invalid \"assets\" value: " + parsedResponse["assets"]
+                );
+            }
+
+            IDictionary<string, string> downloadUrlByAssetName = new Dictionary<string, string>();
+
+            foreach (JsonValue asset in parsedResponse["assets"].AsJsonArray)
+            {
+                if (!asset["name"].IsString || String.IsNullOrEmpty(asset["name"]))
+                {
+                    throw new GithubApiException(
+                        requestUri,
+                        "Invalid asset \"name\": " + asset["name"]
+                    );
+                }
+
+                if (!asset["browser_download_url"].IsString ||
+                    !Uri.IsWellFormedUriString(asset["browser_download_url"], UriKind.Absolute))
+                {
+                    throw new GithubApiException(
+                        requestUri,
+                        "Invalid asset \"browser_download_url\": " + asset["browser_download_url"]
+                    );
+                }                
+
+                downloadUrlByAssetName[asset["name"]] = asset["browser_download_url"];
+            }
+
+            return new ReleaseInfo(
+                parsedResponse["created_at"],
+                parsedResponse["target_commitish"],
+                downloadUrlByAssetName
+            );
         }
     }
 }

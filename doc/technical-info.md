@@ -42,6 +42,28 @@ They are listed here to facilitate future maintenance:
    ```
    anywhere in the binary content, where `<hash>` consists of 4 to 40 hexadecimal characters,
    and `<separator>` is either a space, `\n` or `\0`.  
+    
+   And `<hash>` refers to **same** commit as the `target_commitish` of its release in the GitHub API.  
    
    Yikes!  
    Fortunately, the updater can still detect an outdated version even if that string isn't present.
+
+
+## Assumptions about the updater itself
+
+The updater can update itself.
+For this feature to work properly, it requires the following conditions:
+
+1. The [https://github.com/slash-fr/taystjk-updater](https://github.com/slash-fr/taystjk-updater) repository exists.
+
+2. Said repository has at least 1 non-draft release.
+
+3. The latest (non-draft) release has a `TaystJK Updater.exe` asset.
+
+4. `TaystJK Updater.exe` contains a `GitVersion` resource with a commit hash (4 to 40 hexadecimal characters)
+   that refers to the **same** commit as the `target_commitish` of its release in the GitHub API.
+
+   > **Note to self:** When publishing a new release, explicitly select a commit as the target.
+   > Not just `main`, or the updater will keep updating itself.
+
+5. The folder containing the updater is not admin-protected.

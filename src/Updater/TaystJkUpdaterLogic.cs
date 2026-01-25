@@ -40,6 +40,7 @@ namespace TaystJkUpdater.Updater
         private string _pathToTaystJkExe = "";
         private string _taystJkArchitecture = "";
         private DateTime? _latestReleaseCreatedAt = null;
+        private string _downloadUrl = "";
         private string _pathToDownloadedFile = "";
         private string _pathToExtractedArchive = "";
 
@@ -80,7 +81,7 @@ namespace TaystJkUpdater.Updater
             if (persistentState.LastCheckedByPath.TryGetValue(_pathToTaystJkExe, out DateTime lastChecked)
                 && DateTime.Now < lastChecked.AddHours(1))
             {
-                _logger.Info("Already checked less than an hour ago.");
+                _logger.Info("Already checked for TaystJK updates less than an hour ago.");
                 return UpdateCheckResult.AlreadyCheckedRecently;
             }
 
@@ -99,6 +100,12 @@ namespace TaystJkUpdater.Updater
             {
                 latestRelease = await GithubApiHelper.GetReleaseInfo(httpClient, requestUri, cancellationToken);
                 _latestReleaseCreatedAt = latestRelease.CreatedAt;
+            }
+            catch (TaskCanceledException exception)
+            {
+                _logger.Warning("A GitHub API request was cancelled: " + requestUri);
+                _logger.Debug(exception.ToString());
+                return UpdateCheckResult.Error;
             }
             catch (TooManyRequestsException exception)
             {
@@ -128,17 +135,16 @@ namespace TaystJkUpdater.Updater
             }
 
             // Try to use the commit hash
-            Match match = Regex.Match(latestRelease.TargetCommitish, "^[0-9A-Fa-f]{4,40}$");
-            if (match.Success)
+            if (GitHelper.IsValidCommitHash(latestRelease.TargetCommitish))
             {
                 string currentCommitHash = DetectCurrentTaystJkCommitHash();
                 if (!String.IsNullOrEmpty(currentCommitHash))
                 {
-                    if (match.Value.ToLower().StartsWith(currentCommitHash.ToLower()))
+                    if (GitHelper.IsSameCommit(currentCommitHash, latestRelease.TargetCommitish))
                     {
                         _logger.Info("TaystJK is already up to date, according to the commit hash.");
                         _logger.Debug("Current commit: " + currentCommitHash);
-                        _logger.Debug("Latest release: " + match.Value);
+                        _logger.Debug("Latest release: " + latestRelease.TargetCommitish);
 
                         // Already up-to-date - Don't check during the next hour
                         persistentState.LastCheckedByPath[_pathToTaystJkExe] = DateTime.Now;
@@ -149,7 +155,28 @@ namespace TaystJkUpdater.Updater
 
                     _logger.Info("New TaystJK version found, based on the commit hash.");
                     _logger.Info("Current commit: " + currentCommitHash);
-                    _logger.Info("Latest release: " + match.Value);
+                    _logger.Info("Latest release: " + latestRelease.TargetCommitish);
+
+                    string basename = Path.GetFileName(_pathToTaystJkExe);
+
+                    if (!latestRelease.DownloadUrlByAssetName.TryGetValue(basename, out _downloadUrl))
+                    {
+                        _logger.Warning(
+                            "The latest TaystJK release does not seem to have a "
+                            + '"' + basename + '"' + " asset."
+                        );
+
+                        _logger.Debug("Assets:");
+                        foreach (var asset in latestRelease.DownloadUrlByAssetName)
+                        {
+                            _logger.Debug(asset.Key + " => " + asset.Value);
+                        }
+
+                        return UpdateCheckResult.Error;
+                    }
+
+                    // The download URL is typically:
+                    // "https://github.com/taysta/TaystJK/releases/download/latest/TaystJK-windows-{arch}.zip"
 
                     // Don't update persistentState.LastCheckedByPath yet,
                     // because the update might fail before being fully installed,
@@ -222,9 +249,7 @@ namespace TaystJkUpdater.Updater
                 string downloadFilename = "TaystJK-windows-" + _taystJkArchitecture + ".zip";
                 _pathToDownloadedFile = pathToDownloadDirectory + Path.DirectorySeparatorChar + downloadFilename;
 
-                string downloadUri = AppEnvironment.LatestTaystJkDownloadUrl + downloadFilename;
-
-                _logger.Debug("Downloading: " + downloadUri);
+                _logger.Debug("Downloading: " + _downloadUrl);
 
                 destinationFilestream = new FileStream(
                     _pathToDownloadedFile,
@@ -233,7 +258,13 @@ namespace TaystJkUpdater.Updater
                     FileShare.None
                 );
 
-                await httpClient.DownloadAsync(downloadUri, destinationFilestream, progress, cancellationToken);
+                await httpClient.DownloadAsync(_downloadUrl, destinationFilestream, progress, cancellationToken);
+            }
+            catch (TaskCanceledException exception)
+            {
+                _logger.Warning("A download was cancelled: " + _downloadUrl);
+                _logger.Debug(exception.ToString());
+                return false;
             }
             catch (Exception exception)
             {
@@ -351,6 +382,11 @@ namespace TaystJkUpdater.Updater
                     backupDirectory,
                     cancellationToken
                 );
+            }
+            catch (TaskCanceledException)
+            {
+                _logger.Debug("TaystJK backup was cancelled.");
+                return false;
             }
             catch (Exception exception)
             {

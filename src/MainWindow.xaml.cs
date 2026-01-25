@@ -17,12 +17,14 @@ namespace TaystJkUpdater
         private Logger _logger;
         private UpdateLock _updateLock;
         private HttpClient _httpClient;
+        private PersistentState _persistentState;
         private TaystJkUpdaterLogic _taystJkUpdater;
         private readonly CancellationTokenSource _cancellationTokenSource;
 
         public MainWindow()
         {
             InitializeComponent();
+            _logger = new Logger();
             _cancellationTokenSource = new CancellationTokenSource();
         }
 
@@ -30,8 +32,6 @@ namespace TaystJkUpdater
         {
             try
             {
-                _logger = new Logger();
-
                 try
                 {
                     // Try to put the window in the same spot as the initial splash screen
@@ -42,7 +42,7 @@ namespace TaystJkUpdater
                     // Close the initial splash screen
                     ((App)App.Current).SplashScreen.Close(TimeSpan.FromSeconds(0.5));
 
-                    await PerformUpdate(_logger);
+                    await PerformUpdate();
                 }
                 catch (TaskCanceledException exception)
                 {
@@ -95,9 +95,11 @@ namespace TaystJkUpdater
             }
         }
 
-        private async Task PerformUpdate(Logger logger)
+        private async Task PerformUpdate()
         {
-            _taystJkUpdater = new TaystJkUpdaterLogic(logger);
+            // Sorry about the mess. I hope you like spaghetti.
+
+            _taystJkUpdater = new TaystJkUpdaterLogic(_logger);
 
             if (!await Task.Run(_taystJkUpdater.InitializeUpdater))
             {
@@ -105,17 +107,24 @@ namespace TaystJkUpdater
                 return;
             }
 
-            await AcquireLock(logger);
+            await AcquireLock();
 
-            PersistentState persistentState = new PersistentState();
-            await Task.Run(persistentState.Load);
+            _persistentState = new PersistentState();
+            await Task.Run(_persistentState.Load);
             _httpClient = new HttpClient();
 
-            StatusLabel.Content = "Checking for TaystJK updates...";
+            StatusLabel.Content = "Checking for updates...";
             SkipButton.Visibility = Visibility.Visible;
 
+            if (!await UpdateTheUpdater() || _cancellationTokenSource.IsCancellationRequested)
+            {
+                return;
+            }
+
+            StatusLabel.Content = "Checking for TaystJK updates...";
+
             UpdateCheckResult updateCheckResult = await Task.Run(
-                () => _taystJkUpdater.CheckForUpdates(_httpClient, _cancellationTokenSource.Token, persistentState)
+                () => _taystJkUpdater.CheckForUpdates(_httpClient, _cancellationTokenSource.Token, _persistentState)
             );
 
             if (_cancellationTokenSource.IsCancellationRequested)
@@ -195,7 +204,7 @@ namespace TaystJkUpdater
             StatusLabel.Content = "Applying TaystJK update...";
             SkipButton.Visibility = Visibility.Hidden; // Skipping would leave a partially updated version...
             bool copiedNewFilesSuccessfully = await Task.Run(
-                () => _taystJkUpdater.CopyNewFiles(persistentState)
+                () => _taystJkUpdater.CopyNewFiles(_persistentState)
             );
             if (!copiedNewFilesSuccessfully)
             {
@@ -210,7 +219,7 @@ namespace TaystJkUpdater
         /// Waits until other instances of the updater finish their job.
         /// </summary>
         /// <exception cref="ProgramDataNotWritableException"></exception>
-        private async Task AcquireLock(Logger logger)
+        private async Task AcquireLock()
         {
             int totalLockDelayInSeconds = 0;
             _updateLock = UpdateLock.Acquire();
@@ -219,7 +228,7 @@ namespace TaystJkUpdater
                 if (totalLockDelayInSeconds == 0)
                 {
                     StatusLabel.Content = "Waiting for an update to finish...";
-                    logger.Warning("Could not acquire the update lock. Waiting until the lock is released.");
+                    _logger.Warning("Could not acquire the update lock. Waiting until the lock is released.");
                 }
                 else if (totalLockDelayInSeconds == 5)
                 {
@@ -235,6 +244,64 @@ namespace TaystJkUpdater
             }
 
             ButtonRow.Visibility = Visibility.Hidden;
+        }
+
+        /// <summary>
+        /// Update the updater itself
+        /// </summary>
+        /// <returns>
+        /// true if the updater can proceed to update TaystJK,
+        /// false if it needs to restart, or if there's a fatal error.
+        /// </returns>
+        private async Task<bool> UpdateTheUpdater()
+        {
+            UpdaterUpdater updaterUpdater = new UpdaterUpdater(_logger);
+
+            bool canUpdate = await Task.Run(
+                () => updaterUpdater.CanUpdate(_httpClient, _persistentState, _cancellationTokenSource.Token)
+            );
+
+            if (!canUpdate || _cancellationTokenSource.IsCancellationRequested)
+            {
+                return true;
+            }
+
+            StatusLabel.Content = "Downloading the latest updater...";
+
+            bool downloadedSuccessfully = await Task.Run(
+                () => updaterUpdater.DownloadLatestRelease(_httpClient, _cancellationTokenSource.Token)
+            );
+
+            if (!downloadedSuccessfully || _cancellationTokenSource.IsCancellationRequested)
+            {
+                return true; // Updating TaystJK is more important than updating the updater.
+            }
+
+            StatusLabel.Content = "Installing the new updater...";
+
+            bool backedUpSuccessfully = await Task.Run(
+                () => updaterUpdater.BackupCurrentUpdater()
+            );
+
+            if (!backedUpSuccessfully)
+            {
+                return true; // Updating TaystJK is more important than updating the updater.
+            }
+
+            bool installedSuccessfully = await Task.Run(
+                () => updaterUpdater.InstallNewUpdater(_persistentState)
+            );
+
+            if (!installedSuccessfully) // Fatal error. The updater may be broken on restart.
+            {
+                DisplayError("An error occurred while updating the updater!");
+                return false; // Don't try to update TaystJK. Let the user read the error message.
+            }
+
+            await Task.Run(updaterUpdater.LaunchNewUpdater);
+            Close();
+
+            return false; // Sorry, we're closed.
         }
 
         /// <summary>

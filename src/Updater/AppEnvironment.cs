@@ -15,11 +15,11 @@ namespace TaystJkUpdater.Updater
         /// </summary>
         public static string PathToUpdaterLocalAppData { get; }
 
+        public const string LatestUpdaterReleaseApiUrl
+            = "https://api.github.com/repos/slash-fr/taystjk-updater/releases/latest";
+
         public const string LatestTaystJkReleaseApiUrl
             = "https://api.github.com/repos/taysta/TaystJK/releases/tags/latest";
-
-        public const string LatestTaystJkDownloadUrl
-            = "https://github.com/taysta/TaystJK/releases/download/latest/";
 
         static AppEnvironment()
         {
