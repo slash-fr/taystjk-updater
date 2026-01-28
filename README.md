@@ -1,4 +1,4 @@
-﻿# TaystJK Updater
+# TaystJK Updater
 
 **TaystJK Updater** is a small program designed to act as a "splash screen"
 for TaystJK.
@@ -40,24 +40,4 @@ https://github.com/taysta/TaystJK
 
 - [Advanced usage](doc/advanced-usage.md)
 - [Technical choices and assumptions](doc/technical-info.md)
-
-
-## License
-
-\[TODO\]
-
-
-## Credits
-
-**Slash:** Updater code, background image¹, icons² and animations.
-
-1. Background image adapted from my
-   ["widescreen levelshots"](https://jkhub.org/files/file/4179-widescreen-levelshots/) pack  
-   → Recreation of the original `mp/ffa4` levelshot
-
-2. "Jedi Knight" logo loosely based on:  
-   https://en.wikipedia.org/wiki/File:Star_Wars_Jedi_Knight_II_Jedi_Outcast_Logo.svg
-   
-**TaystJK Updater** also includes the
-[LightJson](https://github.com/MarcosLopezC/LightJson) library (MIT-licensed), from Marcos López C.
-([Why?](docs/technical-info.md#lightjson))
+- [Credits and license](doc/credits-and-license.md)

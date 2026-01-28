@@ -158,6 +158,10 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="GitVersion" />
+    <None Include="doc\advanced-usage.md" />
+    <None Include="doc\checking-for-updates.avif" />
+    <None Include="doc\credits-and-license.md" />
+    <None Include="doc\technical-info.md" />
     <None Include="README.md" />
     <None Include="src\app.manifest" />
     <None Include="lib\LightJson\README.md" />
@@ -190,7 +194,15 @@
   <ItemGroup>
     <None Include="lib\LightJson\LICENSE.txt" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include=".gitignore" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitattributes" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="LICENSE.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>git rev-parse --short HEAD &gt; "$(ProjectDir)\GitVersion"</PreBuildEvent>
