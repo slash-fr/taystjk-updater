@@ -109,8 +109,9 @@ namespace TaystJkUpdater
 
             await AcquireLock();
 
-            _persistentState = new PersistentState();
-            await Task.Run(_persistentState.Load);
+            await Task.Run(
+                () => _persistentState = new PersistentState()
+            );
             _httpClient = new HttpClient();
 
             StatusLabel.Content = "Checking for updates...";

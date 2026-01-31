@@ -615,7 +615,7 @@ namespace TaystJkUpdater.Updater
             try
             {
                 long taystJkExeSize = new FileInfo(_pathToTaystJkExe).Length;
-                if (taystJkExeSize > 10e6) // Totally arbitrary limit
+                if (taystJkExeSize > 10_000_000) // Totally arbitrary limit
                 {
                     // Don't load a file larger than 10MB into memory
                     _logger.Warning(
@@ -657,7 +657,7 @@ namespace TaystJkUpdater.Updater
                     {
                         string commitHash = match.Groups[1].Value;
                         _logger.Info(
-                            "Detected commit hash " + '"' + commitHash + '"'
+                            "Detected TaystJK commit hash: " + '"' + commitHash + '"'
                         );
                         return commitHash;
                     }

@@ -23,12 +23,18 @@ namespace TaystJkUpdater.ProgramData
 
         private readonly string _pathToJsonFile;
 
+        /// <summary>
+        /// Instantiates and loads the persistent state.
+        /// </summary>
+        /// <exception cref="ProgramDataNotReadableException"></exception>
         public PersistentState()
         {
             GithubThrottledUntil = null;
             LastCheckedByPath = new Dictionary<string, DateTime>();
 
             _pathToJsonFile = AppEnvironment.PathToUpdaterProgramData + Path.DirectorySeparatorChar + "state.json";
+
+            Load();
         }
 
 
@@ -36,7 +42,7 @@ namespace TaystJkUpdater.ProgramData
         /// Loads the persistent state
         /// </summary>
         /// <exception cref="ProgramDataNotReadableException"></exception>
-        public void Load()
+        private void Load()
         {
             if (!File.Exists(_pathToJsonFile))
             {
