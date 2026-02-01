@@ -40,6 +40,7 @@ namespace TaystJkUpdater.Updater
         private string _pathToTaystJkExe = "";
         private string _taystJkArchitecture = "";
         private DateTime? _latestReleaseCreatedAt = null;
+        private string _downloadFilename = "";
         private string _downloadUrl = "";
         private string _pathToDownloadedFile = "";
         private string _pathToExtractedArchive = "";
@@ -72,6 +73,13 @@ namespace TaystJkUpdater.Updater
             {
                 throw new InvalidOperationException(
                     "CheckForUpdates() was called too soon (missing: _pathToTaystJkExe)."
+                );
+            }
+
+            if (String.IsNullOrEmpty(_taystJkArchitecture))
+            {
+                throw new InvalidOperationException(
+                    "CheckForUpdates() was called too soon (missing: _taystJkArchitecture)."
                 );
             }
 
@@ -157,26 +165,10 @@ namespace TaystJkUpdater.Updater
                     _logger.Info("Current commit: " + currentCommitHash);
                     _logger.Info("Latest release: " + latestRelease.TargetCommitish);
 
-                    string basename = Path.GetFileName(_pathToTaystJkExe);
-
-                    if (!latestRelease.DownloadUrlByAssetName.TryGetValue(basename, out _downloadUrl))
+                    if (!ProcessReleaseAssets(latestRelease))
                     {
-                        _logger.Warning(
-                            "The latest TaystJK release does not seem to have a "
-                            + '"' + basename + '"' + " asset."
-                        );
-
-                        _logger.Debug("Assets:");
-                        foreach (var asset in latestRelease.DownloadUrlByAssetName)
-                        {
-                            _logger.Debug(asset.Key + " => " + asset.Value);
-                        }
-
                         return UpdateCheckResult.Error;
                     }
-
-                    // The download URL is typically:
-                    // "https://github.com/taysta/TaystJK/releases/download/latest/TaystJK-windows-{arch}.zip"
 
                     // Don't update persistentState.LastCheckedByPath yet,
                     // because the update might fail before being fully installed,
@@ -194,6 +186,11 @@ namespace TaystJkUpdater.Updater
                 _logger.Info("New TaystJK version found, based on the file timestamps.");
                 _logger.Info("Local exe file created at: " + localCreationTime.ToString("yyyy-MM-dd HH:mm:ss"));
                 _logger.Info("Latest release created at: " + latestRelease.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                if (!ProcessReleaseAssets(latestRelease))
+                {
+                    return UpdateCheckResult.Error;
+                }
 
                 // Don't update persistentState.LastCheckedByPath yet,
                 // because the update might fail before being fully installed,
@@ -224,10 +221,17 @@ namespace TaystJkUpdater.Updater
             CancellationToken cancellationToken,
             IProgress<int> progress)
         {
-            if (String.IsNullOrEmpty(_taystJkArchitecture))
+            if (String.IsNullOrEmpty(_downloadFilename))
             {
                 throw new InvalidOperationException(
-                    "DownloadLatestRelease() was called too soon (missing: _taystJkArchitecture)."
+                    "DownloadLatestRelease() was called too soon (missing: _downloadFilename)."
+                );
+            }
+
+            if (String.IsNullOrEmpty(_downloadUrl))
+            {
+                throw new InvalidOperationException(
+                    "DownloadLatestRelease() was called too soon (missing: _downloadUrl)."
                 );
             }
 
@@ -246,8 +250,7 @@ namespace TaystJkUpdater.Updater
             try
             {
                 string pathToDownloadDirectory = ProgramDataHelper.CreateNewDownloadSubdirectory();
-                string downloadFilename = "TaystJK-windows-" + _taystJkArchitecture + ".zip";
-                _pathToDownloadedFile = pathToDownloadDirectory + Path.DirectorySeparatorChar + downloadFilename;
+                _pathToDownloadedFile = pathToDownloadDirectory + Path.DirectorySeparatorChar + _downloadFilename;
 
                 _logger.Debug("Downloading: " + _downloadUrl);
 
@@ -675,6 +678,36 @@ namespace TaystJkUpdater.Updater
                 // Other than that, fail silently. (This whole method is a dirty hack, anyway...)
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Checks the latest release assets, and initializes _downloadFilename and _downloadUrl.
+        /// </summary>
+        /// <returns>true on success, false on failure</returns>
+        private bool ProcessReleaseAssets(ReleaseInfo latestRelease)
+        {
+            _downloadFilename = "TaystJK-windows-" + _taystJkArchitecture + ".zip";
+
+            if (latestRelease.DownloadUrlByAssetName.TryGetValue(_downloadFilename, out _downloadUrl))
+            {
+                // The download URL is typically:
+                // "https://github.com/taysta/TaystJK/releases/download/latest/TaystJK-windows-{arch}.zip"
+
+                return true;
+            }
+
+            _logger.Error(
+                "The latest TaystJK release does not seem to have a "
+                + '"' + _downloadFilename + '"' + " asset."
+            );
+
+            _logger.Debug("Assets:");
+            foreach (var asset in latestRelease.DownloadUrlByAssetName)
+            {
+                _logger.Debug(asset.Key + " => " + asset.Value);
+            }
+
+            return false;
         }
 
         /// <summary>
