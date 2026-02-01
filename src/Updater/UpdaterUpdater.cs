@@ -367,7 +367,7 @@ namespace TaystJkUpdater.Updater
             // Ignore the current executable file name (e.g. "Updater.exe")
             commandLineArgs.RemoveAt(0);
 
-            string commandLineArgsAsString = String.Join(" ", commandLineArgs); // TODO: escape arguments?
+            string commandLineArgsAsString = '"' + String.Join('"' + " " + '"', commandLineArgs) + '"';
 
             System.Diagnostics.Process.Start(_pathToUpdaterExe, commandLineArgsAsString);
         }

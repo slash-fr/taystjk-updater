@@ -517,13 +517,15 @@ namespace TaystJkUpdater.Updater
         /// <returns>true if the parsing succeeds, false otherwise</returns>
         private bool ParseCommandLineArgs()
         {
+            _logger.Debug("Command line: " + Environment.CommandLine);
+
             List<string> commandLineArgs = Environment.GetCommandLineArgs().ToList();
             if (commandLineArgs.Count < 2)
             {
                 return true;
             }
 
-            // Ignore the current executable file name (e.g. "Updater.exe")
+            // Ignore the current executable file name (e.g. "TaystJK Updater.exe")
             commandLineArgs.RemoveAt(0);
 
             // Detect whether the first argument points to the TaystJK executable
@@ -542,8 +544,7 @@ namespace TaystJkUpdater.Updater
                 }
             }
 
-            _commandLineArgsAsString = String.Join(" ", commandLineArgs);
-            // TODO: escape arguments?
+            _commandLineArgsAsString = '"' + String.Join('"' + " " + '"', commandLineArgs) + '"';
 
             return true;
         }
