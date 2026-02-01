@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:TaystJkUpdater"
         mc:Ignorable="d"
         WindowStyle="None"
-        ResizeMode="NoResize"
+        ResizeMode="CanMinimize"
         Title="TaystJK Updater"
         Width="640"
         Height="360"
