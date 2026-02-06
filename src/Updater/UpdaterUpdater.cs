@@ -20,7 +20,7 @@ namespace TaystJkUpdater.Updater
     /// </summary>
     internal class UpdaterUpdater
     {
-        private const string UpdaterExeFilename = "TaystJK Updater.exe";
+        private const string UpdaterExeFilename = "TaystJK_Updater.exe";
         private readonly Logger _logger;
         private readonly string _pathToUpdaterExe;
         private readonly string _pathToOldUpdaterExe;

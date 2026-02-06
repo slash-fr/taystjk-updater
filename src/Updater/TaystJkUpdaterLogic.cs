@@ -525,7 +525,7 @@ namespace TaystJkUpdater.Updater
                 return true;
             }
 
-            // Ignore the current executable file name (e.g. "TaystJK Updater.exe")
+            // Ignore the current executable file name (e.g. "TaystJK_Updater.exe")
             commandLineArgs.RemoveAt(0);
 
             // Detect whether the first argument points to the TaystJK executable
