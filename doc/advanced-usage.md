@@ -7,7 +7,7 @@ as a command-line argument, or as a shortcut "target" argument.
 
 For instance:
 ```
-"TaystJK Updater.exe" taystjk.x86_64.exe
+TaystJK_Updater.exe taystjk.x86_64.exe
 ```
 
 This enables you to:
@@ -22,7 +22,7 @@ Any other arguments will get passed to TaystJK.
 
 So, as an example:
 ```
-"TaystJK Updater.exe" set r_mode 6 + connect 192.0.2.1
+TaystJK_Updater.exe set r_mode 6 + connect 192.0.2.1
 ```
 would launch the game with a resolution of `1024x768` and immediately connect
 to the specified server.
@@ -32,6 +32,6 @@ to the specified server.
 
 You can combine both the executable name (or path) and additional params:
 ```
-"TaystJK Updater.exe" taystjk.x86.exe connect 192.0.2.1
+TaystJK_Updater.exe taystjk.x86.exe connect 192.0.2.1
 ```
 In this case, the "path to TaystJK" argument must come first.

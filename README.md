@@ -26,7 +26,7 @@ https://github.com/taysta/TaystJK
 
 1. Download `TaystJK_Updater.exe` from the **Releases** page.  
    https://github.com/slash-fr/taystjk-updater/releases 
-2. Drop `TaystJK__Updater.exe` into the same folder as `taystjk.x86_64.exe`
+2. Drop `TaystJK_Updater.exe` into the same folder as `taystjk.x86_64.exe`
    or `taystjk.x86.exe`.
 3. Make sure the folder is **not** admin-protected.  
    - Running the updater as admin is ⚠️ **highly discouraged** ⚠️,
