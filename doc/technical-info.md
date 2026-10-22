@@ -26,7 +26,7 @@ They are listed here to facilitate future maintenance:
 
 1. The [https://github.com/taysta/TaystJK](https://github.com/taysta/TaystJK) repository exists.
 
-2. Said repository has a release tagged as `latest`.
+2. Said repository has a release tagged as `latest-build`.
 
 3. The latest release has `TaystJK-windows-x86.zip` and `TaystJK-windows-x86_64.zip` assets (among others).
 

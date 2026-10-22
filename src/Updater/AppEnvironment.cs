@@ -19,7 +19,7 @@ namespace TaystJkUpdater.Updater
             = "https://api.github.com/repos/slash-fr/taystjk-updater/releases/latest";
 
         public const string LatestTaystJkReleaseApiUrl
-            = "https://api.github.com/repos/taysta/TaystJK/releases/tags/latest";
+            = "https://api.github.com/repos/taysta/TaystJK/releases/tags/latest-build";
 
         static AppEnvironment()
         {
