@@ -640,7 +640,7 @@ namespace TaystJkUpdater.Updater
                     return null;
                 }
 
-                string prefix = "TaystJK: latest-";
+                string prefix = "TaystJK: latest-build-";
 
                 int index = 0;
                 do
@@ -692,7 +692,7 @@ namespace TaystJkUpdater.Updater
             if (latestRelease.DownloadUrlByAssetName.TryGetValue(_downloadFilename, out _downloadUrl))
             {
                 // The download URL is typically:
-                // "https://github.com/taysta/TaystJK/releases/download/latest/TaystJK-windows-{arch}.zip"
+                // "https://github.com/taysta/TaystJK/releases/download/latest-build/TaystJK-windows-{arch}.zip"
 
                 return true;
             }

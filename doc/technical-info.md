@@ -26,9 +26,9 @@ They are listed here to facilitate future maintenance:
 
 1. The [https://github.com/taysta/TaystJK](https://github.com/taysta/TaystJK) repository exists.
 
-2. Said repository has a release tagged as `latest`.
+2. Said repository has a release tagged as `latest-build`.
 
-3. The latest release has `TaystJK-windows-x86.zip` and `TaystJK-windows-x86_64.zip` assets (among others).
+3. The release has `TaystJK-windows-x86.zip` and `TaystJK-windows-x86_64.zip` assets (among others).
 
 4. The release ZIP has its content at the root of the archive, with no intermediate subdirectory.
 
@@ -38,7 +38,7 @@ They are listed here to facilitate future maintenance:
 
 7. Optional: The main exe contains an ASCII string in the following format:
    ```
-   TaystJK: latest-<hash><separator>
+   TaystJK: latest-build-<hash><separator>
    ```
    anywhere in the binary content, where `<hash>` consists of 4 to 40 hexadecimal characters,
    and `<separator>` is either a space, `\n` or `\0`.  
