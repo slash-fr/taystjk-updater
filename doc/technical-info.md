@@ -38,12 +38,19 @@ They are listed here to facilitate future maintenance:
 
 7. Optional: The main exe contains an ASCII string in the following format:
    ```
-   TaystJK: latest-build-<hash><separator>
+   TaystJK: [optional-tag-]<hash><separator>
    ```
    anywhere in the binary content, where `<hash>` consists of 4 to 40 hexadecimal characters,
    and `<separator>` is either a space, `\n` or `\0`.  
     
    And `<hash>` refers to **same** commit as the `target_commitish` of its release in the GitHub API.  
+
+   For instance:
+   ```
+   TaystJK: latest-build-123456abc\n
+   ```
+
+   Yes, the entire main exe is loaded into memory to look for that string.
    
    Yikes!  
    Fortunately, the updater can still detect an outdated version even if that string isn't present

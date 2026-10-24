@@ -640,7 +640,24 @@ namespace TaystJkUpdater.Updater
                     return null;
                 }
 
-                string prefix = "TaystJK: latest-build-";
+                string prefix = "TaystJK: ";
+                // Looking for: "TaystJK: [optional-tag-]<hash><separator>"
+
+                // Regexp split up for readability:
+                string tagPattern = @"(?:[^\x00-\x20\x2A\x3A\x3F\x5B\x5E\x7E\x7F]+-)?";
+                // Optional, non-capturing group. One or more non-disallowed characters, followed by a '-'.
+                // Disallowed characters, respectively: Control characters and space, '*', ':', '?', '[', '^', '~', DEL
+                // Example match: "latest-build-"
+
+                string hashPattern = "([0-9A-Fa-f]{4,40})";
+                // Example match: "123456abc"
+
+                string separatorPattern = @"[ \0\n]";
+
+                // Full pattern:
+                string pattern = "^" + tagPattern + hashPattern + separatorPattern;
+                // Example match: "latest-build-123456abc\0"
+                // Group[1] would be "123456abc"
 
                 int index = 0;
                 do
@@ -654,9 +671,10 @@ namespace TaystJkUpdater.Updater
 
                     string hashCandidate = taystJkExeContent.Substring(
                         index + prefix.Length,
-                        Math.Min(41, taystJkExeContent.Length - index - prefix.Length)
+                        Math.Min(100, taystJkExeContent.Length - index - prefix.Length)
                     );
-                    Match match = Regex.Match(hashCandidate, @"^([0-9A-Fa-f]{4,40})[ \0\n]");
+
+                    Match match = Regex.Match(hashCandidate, pattern);
                     if (match.Success)
                     {
                         string commitHash = match.Groups[1].Value;
